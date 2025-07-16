@@ -19,6 +19,18 @@ const canvasConfig = {
   }
 }
 
+// Pflanzen-Daten für jedes Areal (angepasst an 800x800 Canvas)
+const plants: Plant[] = [
+  // Core Familie
+  { x: 80, y: 500, name: 'Bobo', areal: 'core-family', health: 'healthy', size: 'big', src: rose },
+  { x: 190, y: 500, name: 'Finja', areal: 'core-family', health: 'healthy', size: 'big', src: sunflower },
+  { x: 135, y: 390, name: 'Mats', areal: 'core-family', health: 'healthy', size: 'big', src: happyBamboo },
+
+  // Self Areal
+  { x: 560, y: 470, name: 'Meditation', areal: 'self', health: 'dead', size: 'small', src: happyBamboo },
+  { x: 640, y: 470, name: 'Natur', areal: 'self', health: 'healthy', size: 'medium', src: happyBamboo },
+];
+
 // Helper functions for plant visualization
 const getPlantSize = (size: Plant['size']) => {
   switch (size) {
@@ -36,6 +48,85 @@ const getHealthTint = (health: Plant['health']) => {
     case 'dead': return { r: 255, g: 0, b: 0, alpha: 0.4 }; // Red tint
     default: return { r: 0, g: 0, b: 0, alpha: 0 };
   }
+};
+
+// Gießplan zeichnen
+const drawWateringPlan = (wateringCtx: CanvasRenderingContext2D) => {
+  // Pflanzen-Liste
+  const startY = 90;
+  const itemHeight = 50;
+  const checkboxSize = 20;
+  const leftMargin = 50;
+
+  wateringCtx.fillStyle = '#34495e';
+  wateringCtx.font = '18px sans-serif';
+  wateringCtx.textAlign = 'left';
+
+  plants.forEach((plant, index) => {
+    const y = startY + index * itemHeight;
+
+    // Checkbox zeichnen
+    wateringCtx.strokeStyle = '#000';
+    wateringCtx.lineWidth = 2;
+    wateringCtx.strokeRect(leftMargin, y - checkboxSize / 2, checkboxSize, checkboxSize);
+
+    // Checkbox Hintergrund
+    wateringCtx.fillStyle = '#ffffff';
+    wateringCtx.fillRect(leftMargin + 1, y - checkboxSize / 2 + 1, checkboxSize - 2, checkboxSize - 2);
+
+    // Pflanzenname
+    wateringCtx.fillStyle = '#000';
+    wateringCtx.fillText(plant.name, leftMargin + checkboxSize + 15, y + 5);
+  });
+};
+
+
+const drawLegend = (ctx: CanvasRenderingContext2D) => {
+  // Add legend for plant health and size
+  const legendX = 50;
+  const legendY = 50;
+  const legendWidth = 200;
+  const legendHeight = 120;
+
+  // Legend background
+  ctx.fillStyle = 'rgba(255, 255, 255, 0.9)';
+  ctx.fillRect(legendX, legendY, legendWidth, legendHeight);
+  ctx.strokeStyle = '#333';
+  ctx.lineWidth = 1;
+  ctx.strokeRect(legendX, legendY, legendWidth, legendHeight);
+
+  // Legend title
+  ctx.fillStyle = '#333';
+  ctx.font = 'bold 16px sans-serif';
+  ctx.textAlign = 'left';
+  ctx.fillText('Legende', legendX + 10, legendY + 20);
+
+  // Health indicators
+  ctx.font = '12px sans-serif';
+  const healthItems = [
+    { emoji: '😊', text: 'Gesund' },
+    { emoji: '😐', text: 'Okay' },
+    { emoji: '😵', text: 'Braucht Hilfe' }
+  ];
+
+  healthItems.forEach((item, index) => {
+    const y = legendY + 40 + index * 20;
+
+    // Emoji indicator
+    ctx.font = '16px sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillStyle = '#000';
+    ctx.fillText(item.emoji, legendX + 15, y + 4);
+
+    // Text
+    ctx.font = '12px sans-serif';
+    ctx.textAlign = 'left';
+    ctx.fillStyle = '#333';
+    ctx.fillText(item.text, legendX + 30, y + 4);
+  });
+
+  // Size info
+  ctx.fillText('Größe = Priorität', legendX + 10, legendY + 110);
 };
 
 const drawPlantWithEffects = (ctx: CanvasRenderingContext2D, img: string, plant: Plant) => {
@@ -93,18 +184,6 @@ const CanvasGarden = () => {
   const wateringPlanRef = useRef<HTMLCanvasElement>(null);
 
   useEffect(() => {
-    // Pflanzen-Daten für jedes Areal (angepasst an 800x800 Canvas)
-    const plants: Plant[] = [
-      // Core Familie
-      { x: 80, y: 500, name: 'Bobo', areal: 'core-family', health: 'healthy', size: 'big', src: rose },
-      { x: 190, y: 500, name: 'Finja', areal: 'core-family', health: 'healthy', size: 'big', src: sunflower },
-      { x: 135, y: 390, name: 'Mats', areal: 'core-family', health: 'healthy', size: 'big', src: happyBamboo },
-
-      // Self Areal (vergrößert und neu positioniert)
-      { x: 560, y: 470, name: 'Meditation', areal: 'self', health: 'dead', size: 'small', src: happyBamboo },
-      { x: 640, y: 470, name: 'Natur', areal: 'self', health: 'healthy', size: 'medium', src: happyBamboo },
-    ];
-
     // Hauptgarten Canvas
     const canvas = canvasRef.current;
     if (!canvas) return;
@@ -132,17 +211,17 @@ const CanvasGarden = () => {
     // Gartenareale zeichnen (rund, rechts und links vom Weg)
     ctx.fillStyle = '#d0f0c0';
 
-    // Family - links unten (deutlich größer für 800x800)
+    // Family - links unten
     ctx.beginPath();
     ctx.arc(170, 500, canvasConfig.areal.radius, 0, 2 * Math.PI);
     ctx.fill();
 
-    // Work - rechts unten (deutlich größer für 800x800)
+    // Work - rechts unten
     ctx.beginPath();
     ctx.arc(630, 500, canvasConfig.areal.radius, 0, 2 * Math.PI);
     ctx.fill();
 
-    // Areal-Beschriftungen (größere Schrift für 800x800)
+    // Areal-Beschriftungen
     ctx.fillStyle = '#000';
     ctx.font = '24px sans-serif';
     ctx.textAlign = 'center';
@@ -190,61 +269,18 @@ const CanvasGarden = () => {
     ctx.lineTo(pathX + pathWidth + 50, 518);
     ctx.stroke();
 
-    // Eingangstor am unteren Ende (angepasst an 800x800)
+    // Eingangstor am unteren Ende
     ctx.fillStyle = '#8B4513';
     ctx.fillRect(pathX - 15, canvas.height - 30, 30, 30);
     ctx.fillRect(pathX + pathWidth - 15, canvas.height - 30, 30, 30);
 
-    // Place plants in the garden areas (größere Pflanzen für 800x800)
+    // Place plants in the garden areas
     plants.forEach(plant => {
       drawPlantWithEffects(ctx, plant.src, plant);
     });
 
-    // Add legend for plant health and size
-    const legendX = 50;
-    const legendY = 50;
-    const legendWidth = 200;
-    const legendHeight = 120;
-
-    // Legend background
-    ctx.fillStyle = 'rgba(255, 255, 255, 0.9)';
-    ctx.fillRect(legendX, legendY, legendWidth, legendHeight);
-    ctx.strokeStyle = '#333';
-    ctx.lineWidth = 1;
-    ctx.strokeRect(legendX, legendY, legendWidth, legendHeight);
-
-    // Legend title
-    ctx.fillStyle = '#333';
-    ctx.font = 'bold 16px sans-serif';
-    ctx.textAlign = 'left';
-    ctx.fillText('Legende', legendX + 10, legendY + 20);
-
-    // Health indicators
-    ctx.font = '12px sans-serif';
-    const healthItems = [
-      { emoji: '😊', text: 'Gesund' },
-      { emoji: '😐', text: 'Okay' },
-      { emoji: '😵', text: 'Braucht Hilfe' }
-    ];
-
-    healthItems.forEach((item, index) => {
-      const y = legendY + 40 + index * 20;
-
-      // Emoji indicator
-      ctx.font = '16px sans-serif';
-      ctx.textAlign = 'center';
-      ctx.fillStyle = '#000';
-      ctx.fillText(item.emoji, legendX + 15, y + 4);
-
-      // Text
-      ctx.font = '12px sans-serif';
-      ctx.textAlign = 'left';
-      ctx.fillStyle = '#333';
-      ctx.fillText(item.text, legendX + 30, y + 4);
-    });
-
-    // Size info
-    ctx.fillText('Größe = Priorität', legendX + 10, legendY + 110);
+    // Draw the legend
+    drawLegend(ctx);
 
     // Gießplan Canvas
     const wateringCanvas = wateringPlanRef.current;
@@ -253,48 +289,18 @@ const CanvasGarden = () => {
     const wateringCtx = wateringCanvas.getContext('2d');
     if (!wateringCtx) return;
 
-    // Gießplan zeichnen
-    const drawWateringPlan = () => {
-      // Pflanzen-Liste
-      const startY = 90;
-      const itemHeight = 50;
-      const checkboxSize = 20;
-      const leftMargin = 50;
-
-      wateringCtx.fillStyle = '#34495e';
-      wateringCtx.font = '18px sans-serif';
-      wateringCtx.textAlign = 'left';
-
-      plants.forEach((plant, index) => {
-        const y = startY + index * itemHeight;
-
-        // Checkbox zeichnen
-        wateringCtx.strokeStyle = '#000';
-        wateringCtx.lineWidth = 2;
-        wateringCtx.strokeRect(leftMargin, y - checkboxSize / 2, checkboxSize, checkboxSize);
-
-        // Checkbox Hintergrund
-        wateringCtx.fillStyle = '#ffffff';
-        wateringCtx.fillRect(leftMargin + 1, y - checkboxSize / 2 + 1, checkboxSize - 2, checkboxSize - 2);
-
-        // Pflanzenname
-        wateringCtx.fillStyle = '#000';
-        wateringCtx.fillText(plant.name, leftMargin + checkboxSize + 15, y + 5);
-      });
-    };
-
-    drawWateringPlan();
+    drawWateringPlan(wateringCtx);
   }, []);
 
   return (
     <div>
-      <canvas ref={canvasRef} width={800} height={800} />
+      <canvas ref={canvasRef} width={1200} height={800} />
 
       <div style={{ marginTop: '30px' }}>
         <canvas
           ref={wateringPlanRef}
           width={800}
-          height={300}
+          height={800}
         />
       </div>
     </div>
