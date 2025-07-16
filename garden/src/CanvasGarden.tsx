@@ -117,6 +117,10 @@ const getPlantPosition = (arealX: number, arealY: number, radius: number, plantS
       result.x = arealXMid;
       result.y = arealYMid;
       break;
+    case 'center-top-mid':
+      result.x = arealXMid;
+      result.y = arealYMid - radius * 0.1;
+      break;
     default:
       break;
   }
@@ -245,19 +249,19 @@ const getPlantsForCanvas = (canvasWidth: number, canvasHeight: number): Plant[] 
       name: 'Oma',
       health: 'dead',
       src: snowdrop,
-      ...getPlantPosition(extendedFamilyCoords.x, extendedFamilyCoords.y, extendedFamilyCoords.radius, 'small', 'center')
+      ...getPlantPosition(extendedFamilyCoords.x, extendedFamilyCoords.y, extendedFamilyCoords.radius, 'small', 'right')
     },
     {
       name: 'Frankes',
       health: 'healthy',
       src: marigold,
-      ...getPlantPosition(extendedFamilyCoords.x, extendedFamilyCoords.y, extendedFamilyCoords.radius, 'big', 'left')
+      ...getPlantPosition(extendedFamilyCoords.x, extendedFamilyCoords.y, extendedFamilyCoords.radius, 'big', 'center-top-mid')
     },
     {
       name: 'Schwiegereltern',
       health: 'healthy',
       src: cucumber,
-      ...getPlantPosition(extendedFamilyCoords.x, extendedFamilyCoords.y, extendedFamilyCoords.radius, 'big', 'right')
+      ...getPlantPosition(extendedFamilyCoords.x, extendedFamilyCoords.y, extendedFamilyCoords.radius, 'big', 'bottom')
     },
 
     // Hobbies Area
@@ -633,7 +637,7 @@ const CanvasGarden = () => {
 
   return (
     <div>
-      <canvas ref={canvasRef} width={1200} height={1400} />
+      <canvas ref={canvasRef} width={1100} height={1400} />
 
       <div style={{ marginTop: '30px' }}>
         <canvas
