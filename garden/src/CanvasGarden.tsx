@@ -4,6 +4,12 @@ import rose from './assets/plants/rose.png';
 import sunflower from './assets/plants/sunflower.png';
 import cactus from './assets/plants/cactus.png';
 import lavendel from './assets/plants/lavendel.png';
+import thymian from './assets/plants/thymian.png';
+import lotusFlower from './assets/plants/lotus-flower.png';
+import oatGrass from './assets/plants/oat-grass.png';
+import waterHyacinth from './assets/plants/water-hyacinth.png'
+import hop from './assets/plants/hop.png'
+import grass from './assets/plants/grass.png'
 
 interface Plant {
   x: number;
@@ -131,37 +137,37 @@ const getPlantsForCanvas = (canvasWidth: number, canvasHeight: number): Plant[] 
     {
       name: 'Fahrrad fahren',
       health: 'healthy',
-      src: happyBamboo,
+      src: thymian,
       ...getPlantPosition(config.areal.sport.x, config.areal.sport.y, config.areal.radius, 'big', 'top')
     },
     {
       name: 'Joggen',
       health: 'okay',
-      src: happyBamboo,
+      src: oatGrass,
       ...getPlantPosition(config.areal.sport.x, config.areal.sport.y, config.areal.radius, 'big', 'center')
     },
     {
       name: 'Klettern',
       health: 'healthy',
-      src: happyBamboo,
+      src: hop,
       ...getPlantPosition(config.areal.sport.x, config.areal.sport.y, config.areal.radius, 'big', 'left')
     },
     {
       name: 'Yoga',
       health: 'healthy',
-      src: happyBamboo,
+      src: lotusFlower,
       ...getPlantPosition(config.areal.sport.x, config.areal.sport.y, config.areal.radius, 'medium', 'right')
     },
     {
       name: 'Schwimmen',
       health: 'okay',
-      src: happyBamboo,
+      src: waterHyacinth,
       ...getPlantPosition(config.areal.sport.x, config.areal.sport.y, config.areal.radius, 'medium', 'bottom-left')
     },
     {
       name: 'Fußball',
       health: 'dead',
-      src: happyBamboo,
+      src: grass,
       ...getPlantPosition(config.areal.sport.x, config.areal.sport.y, config.areal.radius, 'small', 'bottom-right')
     },
   ];
@@ -193,26 +199,32 @@ const drawWateringPlan = (wateringCtx: CanvasRenderingContext2D, plants: Plant[]
   const itemHeight = 50;
   const checkboxSize = 20;
   const leftMargin = 50;
+  const maxItemsPerColumn = 8;
+  const columnWidth = 300; // Breite jeder Spalte
 
   wateringCtx.fillStyle = '#34495e';
   wateringCtx.font = '18px sans-serif';
   wateringCtx.textAlign = 'left';
 
   plants.forEach((plant, index) => {
-    const y = startY + index * itemHeight;
+    const columnIndex = Math.floor(index / maxItemsPerColumn);
+    const itemIndexInColumn = index % maxItemsPerColumn;
+
+    const x = leftMargin + columnIndex * columnWidth;
+    const y = startY + itemIndexInColumn * itemHeight;
 
     // Checkbox zeichnen
     wateringCtx.strokeStyle = '#000';
     wateringCtx.lineWidth = 2;
-    wateringCtx.strokeRect(leftMargin, y - checkboxSize / 2, checkboxSize, checkboxSize);
+    wateringCtx.strokeRect(x, y - checkboxSize / 2, checkboxSize, checkboxSize);
 
     // Checkbox Hintergrund
     wateringCtx.fillStyle = '#ffffff';
-    wateringCtx.fillRect(leftMargin + 1, y - checkboxSize / 2 + 1, checkboxSize - 2, checkboxSize - 2);
+    wateringCtx.fillRect(x + 1, y - checkboxSize / 2 + 1, checkboxSize - 2, checkboxSize - 2);
 
     // Pflanzenname
     wateringCtx.fillStyle = '#000';
-    wateringCtx.fillText(plant.name, leftMargin + checkboxSize + 15, y + 5);
+    wateringCtx.fillText(plant.name, x + checkboxSize + 15, y + 5);
   });
 };
 
