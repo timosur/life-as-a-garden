@@ -2,34 +2,170 @@ import React, { useEffect, useRef } from 'react';
 import happyBamboo from './assets/plants/happy-bamboo.png';
 import rose from './assets/plants/rose.png';
 import sunflower from './assets/plants/sunflower.png';
+import cactus from './assets/plants/cactus.png';
+import lavendel from './assets/plants/lavendel.png';
 
 interface Plant {
   x: number;
   y: number;
   name: string;
-  areal: string;
   src: string;
   health: 'healthy' | 'okay' | 'dead';
   size: 'small' | 'medium' | 'big';
 }
 
-const canvasConfig = {
-  areal: {
-    radius: 150,
+// Funktion zur Berechnung der Canvas-abhängigen Konfiguration
+const getCanvasConfig = (canvasWidth: number, canvasHeight: number) => {
+  const arealRadius = canvasWidth * 0.18; // 12.5% der Canvas-Breite
+  const pathWidth = canvasWidth * 0.025; // 2.5% der Canvas-Breite
+  const pathX = (canvasWidth - pathWidth) / 2;
+
+  // Areale-Positionen basierend auf Canvas-Größe
+  const familyX = canvasWidth * 0.266;
+  const sportX = canvasWidth * 0.734;
+  const arealY = canvasHeight * 0.75;
+
+  return {
+    areal: {
+      radius: arealRadius,
+      family: { x: familyX, y: arealY },
+      sport: { x: sportX, y: arealY }
+    },
+    path: {
+      width: pathWidth,
+      x: pathX
+    }
+  };
+};
+
+const getPlantPosition = (arealX: number, arealY: number, radius: number, plantSizeStr: Plant['size'], position: string): { x: number; y: number, size: Plant['size'] } => {
+  const plantSize = getPlantSize(plantSizeStr);
+  const arealXMid = arealX - plantSize / 2;
+  const arealYMid = arealY - plantSize / 2;
+
+  const result = { x: arealXMid, y: arealYMid, size: plantSizeStr };
+
+  switch (position) {
+    case 'top':
+      result.x = arealXMid;
+      result.y = arealYMid - radius * 0.6;
+      break;
+    case 'bottom':
+      result.x = arealXMid;
+      result.y = arealYMid + radius * 0.6;
+      break;
+    case 'left':
+      result.x = arealX - radius * 0.8;
+      result.y = arealYMid;
+      break;
+    case 'right':
+      result.x = arealX + radius * 0.4;
+      result.y = arealYMid;
+      break;
+    case 'top-left':
+      result.x = arealX - radius * 0.6;
+      result.y = arealYMid - radius * 0.6;
+      break;
+    case 'top-right':
+      result.x = arealX + radius * 0.6;
+      result.y = arealYMid - radius * 0.6;
+      break;
+    case 'bottom-left':
+      result.x = arealX - radius * 0.4;
+      result.y = arealYMid + radius * 0.6;
+      break;
+    case 'bottom-right':
+      result.x = arealXMid + radius * 0.4;
+      result.y = arealYMid + radius * 0.6;
+      break;
+    case 'center':
+      result.x = arealXMid;
+      result.y = arealYMid;
+      break;
+    default:
+      break;
   }
+
+  return result;
 }
 
-// Pflanzen-Daten für jedes Areal (angepasst an 800x800 Canvas)
-const plants: Plant[] = [
-  // Core Familie
-  { x: 80, y: 500, name: 'Bobo', areal: 'core-family', health: 'healthy', size: 'big', src: rose },
-  { x: 190, y: 500, name: 'Finja', areal: 'core-family', health: 'healthy', size: 'big', src: sunflower },
-  { x: 135, y: 390, name: 'Mats', areal: 'core-family', health: 'healthy', size: 'big', src: happyBamboo },
 
-  // Self Areal
-  { x: 560, y: 470, name: 'Meditation', areal: 'self', health: 'dead', size: 'small', src: happyBamboo },
-  { x: 640, y: 470, name: 'Natur', areal: 'self', health: 'healthy', size: 'medium', src: happyBamboo },
-];
+// Funktion zur Berechnung der Pflanzen-Positionen basierend auf Canvas-Größe
+const getPlantsForCanvas = (canvasWidth: number, canvasHeight: number): Plant[] => {
+  const config = getCanvasConfig(canvasWidth, canvasHeight);
+
+  return [
+    // Core Familie - Positionen relativ zum Family-Areal
+    {
+      name: 'Bobo',
+      health: 'healthy',
+      src: rose,
+      ...getPlantPosition(config.areal.family.x, config.areal.family.y, config.areal.radius, 'big', 'top')
+    },
+    {
+      name: 'Finja',
+      health: 'healthy',
+      src: sunflower,
+      ...getPlantPosition(config.areal.family.x, config.areal.family.y, config.areal.radius, 'big', 'left')
+    },
+    {
+      name: 'Mats',
+      health: 'healthy',
+      src: happyBamboo,
+      ...getPlantPosition(config.areal.family.x, config.areal.family.y, config.areal.radius, 'big', 'right')
+    },
+    {
+      name: 'Mama',
+      health: 'healthy',
+      src: lavendel,
+      ...getPlantPosition(config.areal.family.x, config.areal.family.y, config.areal.radius, 'medium', 'center')
+    },
+    {
+      name: 'Papa',
+      health: 'okay',
+      src: cactus,
+      ...getPlantPosition(config.areal.family.x, config.areal.family.y, config.areal.radius, 'small', 'bottom')
+    },
+
+    // sport Areal - Positionen relativ zum sport-Areal
+    {
+      name: 'Fahrrad fahren',
+      health: 'healthy',
+      src: happyBamboo,
+      ...getPlantPosition(config.areal.sport.x, config.areal.sport.y, config.areal.radius, 'big', 'top')
+    },
+    {
+      name: 'Joggen',
+      health: 'okay',
+      src: happyBamboo,
+      ...getPlantPosition(config.areal.sport.x, config.areal.sport.y, config.areal.radius, 'big', 'center')
+    },
+    {
+      name: 'Klettern',
+      health: 'healthy',
+      src: happyBamboo,
+      ...getPlantPosition(config.areal.sport.x, config.areal.sport.y, config.areal.radius, 'big', 'left')
+    },
+    {
+      name: 'Yoga',
+      health: 'healthy',
+      src: happyBamboo,
+      ...getPlantPosition(config.areal.sport.x, config.areal.sport.y, config.areal.radius, 'medium', 'right')
+    },
+    {
+      name: 'Schwimmen',
+      health: 'okay',
+      src: happyBamboo,
+      ...getPlantPosition(config.areal.sport.x, config.areal.sport.y, config.areal.radius, 'medium', 'bottom-left')
+    },
+    {
+      name: 'Fußball',
+      health: 'dead',
+      src: happyBamboo,
+      ...getPlantPosition(config.areal.sport.x, config.areal.sport.y, config.areal.radius, 'small', 'bottom-right')
+    },
+  ];
+};
 
 // Helper functions for plant visualization
 const getPlantSize = (size: Plant['size']) => {
@@ -51,7 +187,7 @@ const getHealthTint = (health: Plant['health']) => {
 };
 
 // Gießplan zeichnen
-const drawWateringPlan = (wateringCtx: CanvasRenderingContext2D) => {
+const drawWateringPlan = (wateringCtx: CanvasRenderingContext2D, plants: Plant[]) => {
   // Pflanzen-Liste
   const startY = 90;
   const itemHeight = 50;
@@ -193,40 +329,48 @@ const CanvasGarden = () => {
 
     ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-    // Schotterweg von unten nach oben (mittig, angepasst an 800x800)
-    const pathWidth = 30;
-    const pathX = (canvas.width - pathWidth) / 2;
+    // Canvas-basierte Konfiguration berechnen
+    const canvasConfig = getCanvasConfig(canvas.width, canvas.height);
+    const plants = getPlantsForCanvas(canvas.width, canvas.height);
+
+    // Schotterweg von unten nach oben (mittig)
+    const { path } = canvasConfig;
 
     // Weg-Grundfarbe (heller Grau)
     ctx.fillStyle = '#D3D3D3';
-    ctx.fillRect(pathX, 0, pathWidth, canvas.height);
+    ctx.fillRect(path.x, 0, path.width, canvas.height);
 
-    // Verbindungswege zu den Arealen (angepasst an größeres Canvas)
-    // Weg zu Family (links unten)
-    ctx.fillRect(pathX - 50, 500, 50, 18);
+    // Verbindungswege zu den Arealen
+    const connectionWidth = canvas.width * 0.04; // 4% der Canvas-Breite
+    const connectionHeight = canvas.height * 0.025; // 2.5% der Canvas-Höhe
+    const connectionY = canvasConfig.areal.family.y - connectionHeight / 2;
 
-    // Weg zu Work (rechts unten) 
-    ctx.fillRect(pathX + pathWidth, 500, 50, 18);
+    // Weg zu Family (links)
+    ctx.fillRect(path.x - connectionWidth, connectionY, connectionWidth, connectionHeight);
+
+    // Weg zu sport (rechts) 
+    ctx.fillRect(path.x + path.width, connectionY, connectionWidth, connectionHeight);
 
     // Gartenareale zeichnen (rund, rechts und links vom Weg)
     ctx.fillStyle = '#d0f0c0';
 
-    // Family - links unten
+    // Family - links
     ctx.beginPath();
-    ctx.arc(170, 500, canvasConfig.areal.radius, 0, 2 * Math.PI);
+    ctx.arc(canvasConfig.areal.family.x, canvasConfig.areal.family.y, canvasConfig.areal.radius, 0, 2 * Math.PI);
     ctx.fill();
 
-    // Work - rechts unten
+    // sport - rechts
     ctx.beginPath();
-    ctx.arc(630, 500, canvasConfig.areal.radius, 0, 2 * Math.PI);
+    ctx.arc(canvasConfig.areal.sport.x, canvasConfig.areal.sport.y, canvasConfig.areal.radius, 0, 2 * Math.PI);
     ctx.fill();
 
     // Areal-Beschriftungen
     ctx.fillStyle = '#000';
-    ctx.font = '24px sans-serif';
+    ctx.font = `${canvas.width * 0.02}px sans-serif`; // 2% der Canvas-Breite
     ctx.textAlign = 'center';
-    ctx.fillText('Core Family', 170, 680);
-    ctx.fillText('Self', 630, 680);
+    const labelOffset = canvasConfig.areal.radius + 30;
+    ctx.fillText('Core Family', canvasConfig.areal.family.x, canvasConfig.areal.family.y + labelOffset);
+    ctx.fillText('Sport', canvasConfig.areal.sport.x, canvasConfig.areal.sport.y + labelOffset);
 
     // Draw garden areas with borders (runde Ränder)
     ctx.strokeStyle = '#8B4513';
@@ -234,45 +378,47 @@ const CanvasGarden = () => {
 
     // Family border
     ctx.beginPath();
-    ctx.arc(170, 500, canvasConfig.areal.radius, 0, 2 * Math.PI);
+    ctx.arc(canvasConfig.areal.family.x, canvasConfig.areal.family.y, canvasConfig.areal.radius, 0, 2 * Math.PI);
     ctx.stroke();
 
-    // Work border
+    // sport border
     ctx.beginPath();
-    ctx.arc(630, 500, canvasConfig.areal.radius, 0, 2 * Math.PI);
+    ctx.arc(canvasConfig.areal.sport.x, canvasConfig.areal.sport.y, canvasConfig.areal.radius, 0, 2 * Math.PI);
     ctx.stroke();
 
     // Weg-Ränder
     ctx.strokeStyle = '#8B4513';
     ctx.lineWidth = 2;
     ctx.beginPath();
-    ctx.moveTo(pathX, 0);
-    ctx.lineTo(pathX, canvas.height);
-    ctx.moveTo(pathX + pathWidth, 0);
-    ctx.lineTo(pathX + pathWidth, canvas.height);
+    ctx.moveTo(path.x, 0);
+    ctx.lineTo(path.x, canvas.height);
+    ctx.moveTo(path.x + path.width, 0);
+    ctx.lineTo(path.x + path.width, canvas.height);
     ctx.stroke();
 
-    // Ränder für Verbindungswege (angepasst an größeres Canvas)
+    // Ränder für Verbindungswege
     // Family Weg Ränder
     ctx.beginPath();
-    ctx.moveTo(pathX - 50, 500);
-    ctx.lineTo(pathX, 500);
-    ctx.moveTo(pathX - 50, 518);
-    ctx.lineTo(pathX, 518);
+    ctx.moveTo(path.x - connectionWidth, connectionY);
+    ctx.lineTo(path.x, connectionY);
+    ctx.moveTo(path.x - connectionWidth, connectionY + connectionHeight);
+    ctx.lineTo(path.x, connectionY + connectionHeight);
     ctx.stroke();
 
-    // Work Weg Ränder
+    // sport Weg Ränder
     ctx.beginPath();
-    ctx.moveTo(pathX + pathWidth, 500);
-    ctx.lineTo(pathX + pathWidth + 50, 500);
-    ctx.moveTo(pathX + pathWidth, 518);
-    ctx.lineTo(pathX + pathWidth + 50, 518);
+    ctx.moveTo(path.x + path.width, connectionY);
+    ctx.lineTo(path.x + path.width + connectionWidth, connectionY);
+    ctx.moveTo(path.x + path.width, connectionY + connectionHeight);
+    ctx.lineTo(path.x + path.width + connectionWidth, connectionY + connectionHeight);
     ctx.stroke();
 
     // Eingangstor am unteren Ende
+    const gateWidth = canvas.width * 0.025; // 2.5% der Canvas-Breite
+    const gateHeight = canvas.height * 0.0375; // 3.75% der Canvas-Höhe
     ctx.fillStyle = '#8B4513';
-    ctx.fillRect(pathX - 15, canvas.height - 30, 30, 30);
-    ctx.fillRect(pathX + pathWidth - 15, canvas.height - 30, 30, 30);
+    ctx.fillRect(path.x - gateWidth / 2, canvas.height - gateHeight, gateWidth, gateHeight);
+    ctx.fillRect(path.x + path.width - gateWidth / 2, canvas.height - gateHeight, gateWidth, gateHeight);
 
     // Place plants in the garden areas
     plants.forEach(plant => {
@@ -289,12 +435,12 @@ const CanvasGarden = () => {
     const wateringCtx = wateringCanvas.getContext('2d');
     if (!wateringCtx) return;
 
-    drawWateringPlan(wateringCtx);
+    drawWateringPlan(wateringCtx, plants);
   }, []);
 
   return (
     <div>
-      <canvas ref={canvasRef} width={1200} height={800} />
+      <canvas ref={canvasRef} width={1200} height={1200} />
 
       <div style={{ marginTop: '30px' }}>
         <canvas
