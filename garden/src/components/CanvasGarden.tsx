@@ -1,27 +1,27 @@
-import React, { useEffect, useRef } from 'react';
-import happyBamboo from './assets/plants/happy-bamboo.png';
-import rose from './assets/plants/rose.png';
-import sunflower from './assets/plants/sunflower.png';
-import cactus from './assets/plants/cactus.png';
-import lavendel from './assets/plants/lavendel.png';
-import thymian from './assets/plants/thymian.png';
-import lotusFlower from './assets/plants/lotus-flower.png';
-import oatGrass from './assets/plants/oat-grass.png';
-import waterHyacinth from './assets/plants/water-hyacinth.png'
-import hop from './assets/plants/hop.png'
-import grass from './assets/plants/grass.png'
-import bonsai from './assets/plants/bonsai.png'
-import ivy from './assets/plants/ivy.png'
-import sage from './assets/plants/sage.png'
-import sequoia from './assets/plants/sequoia.png'
-import aloeVera from './assets/plants/aloe-vera.png'
-import snowdrop from './assets/plants/snowdrop.png'
-import marigold from './assets/plants/marigold.png'
-import cucumber from './assets/plants/cucumber.png'
-import blackLotus from './assets/plants/black-lotus.png'
-import cypress from './assets/plants/cypress.png'
-import dandelion from './assets/plants/dandelion.png'
-import oak from './assets/plants/oak.png'
+import React, { useEffect, useRef, useState } from 'react';
+import happyBamboo from '../assets/plants/happy-bamboo.png';
+import rose from '../assets/plants/rose.png';
+import sunflower from '../assets/plants/sunflower.png';
+import cactus from '../assets/plants/cactus.png';
+import lavendel from '../assets/plants/lavendel.png';
+import thymian from '../assets/plants/thymian.png';
+import lotusFlower from '../assets/plants/lotus-flower.png';
+import oatGrass from '../assets/plants/oat-grass.png';
+import waterHyacinth from '../assets/plants/water-hyacinth.png'
+import hop from '../assets/plants/hop.png'
+import grass from '../assets/plants/grass.png'
+import bonsai from '../assets/plants/bonsai.png'
+import ivy from '../assets/plants/ivy.png'
+import sage from '../assets/plants/sage.png'
+import sequoia from '../assets/plants/sequoia.png'
+import aloeVera from '../assets/plants/aloe-vera.png'
+import snowdrop from '../assets/plants/snowdrop.png'
+import marigold from '../assets/plants/marigold.png'
+import cucumber from '../assets/plants/cucumber.png'
+import blackLotus from '../assets/plants/black-lotus.png'
+import cypress from '../assets/plants/cypress.png'
+import dandelion from '../assets/plants/dandelion.png'
+import oak from '../assets/plants/oak.png'
 
 interface Plant {
   x: number;
@@ -32,43 +32,190 @@ interface Plant {
   size: 'small' | 'medium' | 'big';
 }
 
+interface PlantConfig {
+  name: string;
+  health: 'healthy' | 'okay' | 'dead';
+  imagePath: string;
+  size: 'small' | 'medium' | 'big';
+  position: string;
+}
+
+interface ArealConfig {
+  id: string;
+  name: string;
+  horizontalPos: 'left' | 'right';
+  verticalPos: 'top' | 'middle' | 'bottom';
+  size: 'small' | 'medium' | 'large';
+  plants: PlantConfig[];
+}
+
+interface GardenData {
+  areals: ArealConfig[];
+}
+
+// Plant image mapping
+const plantImages: { [key: string]: string } = {
+  'happy-bamboo': happyBamboo,
+  'rose': rose,
+  'sunflower': sunflower,
+  'cactus': cactus,
+  'lavendel': lavendel,
+  'thymian': thymian,
+  'lotus-flower': lotusFlower,
+  'oat-grass': oatGrass,
+  'water-hyacinth': waterHyacinth,
+  'hop': hop,
+  'grass': grass,
+  'bonsai': bonsai,
+  'ivy': ivy,
+  'sage': sage,
+  'sequoia': sequoia,
+  'aloe-vera': aloeVera,
+  'snowdrop': snowdrop,
+  'marigold': marigold,
+  'cucumber': cucumber,
+  'black-lotus': blackLotus,
+  'cypress': cypress,
+  'dandelion': dandelion,
+  'oak': oak,
+};
+
+// Lokale JSON-Daten (später durch REST API ersetzt)
+const gardenData: GardenData = {
+  areals: [
+    {
+      id: 'core-family',
+      name: 'Core Family',
+      horizontalPos: 'left',
+      verticalPos: 'bottom',
+      size: 'large',
+      plants: [
+        { name: 'Bobo', health: 'healthy', imagePath: 'rose', size: 'big', position: 'top' },
+        { name: 'Finja', health: 'healthy', imagePath: 'sunflower', size: 'big', position: 'left' },
+        { name: 'Mats', health: 'healthy', imagePath: 'happy-bamboo', size: 'big', position: 'right' },
+        { name: 'Mama', health: 'healthy', imagePath: 'lavendel', size: 'medium', position: 'center' },
+        { name: 'Papa', health: 'okay', imagePath: 'cactus', size: 'small', position: 'bottom' },
+      ]
+    },
+    {
+      id: 'sport',
+      name: 'Sport',
+      horizontalPos: 'right',
+      verticalPos: 'bottom',
+      size: 'large',
+      plants: [
+        { name: 'Fahrrad fahren', health: 'healthy', imagePath: 'thymian', size: 'big', position: 'top' },
+        { name: 'Joggen', health: 'okay', imagePath: 'oat-grass', size: 'big', position: 'center' },
+        { name: 'Klettern', health: 'healthy', imagePath: 'hop', size: 'big', position: 'left' },
+        { name: 'Yoga', health: 'healthy', imagePath: 'lotus-flower', size: 'medium', position: 'right' },
+        { name: 'Schwimmen', health: 'okay', imagePath: 'water-hyacinth', size: 'medium', position: 'bottom-left' },
+        { name: 'Fußball', health: 'dead', imagePath: 'grass', size: 'small', position: 'bottom-right' },
+      ]
+    },
+    {
+      id: 'mental-health',
+      name: 'Mental Health',
+      horizontalPos: 'left',
+      verticalPos: 'middle',
+      size: 'large',
+      plants: [
+        { name: 'Meditation', health: 'healthy', imagePath: 'bonsai', size: 'big', position: 'center' },
+        { name: 'Lesen', health: 'healthy', imagePath: 'ivy', size: 'medium', position: 'left' },
+        { name: 'Journaling', health: 'healthy', imagePath: 'sage', size: 'medium', position: 'right' },
+        { name: 'Waldbaden', health: 'okay', imagePath: 'sequoia', size: 'medium', position: 'bottom' },
+        { name: 'Psychotherapie', health: 'healthy', imagePath: 'aloe-vera', size: 'big', position: 'top' },
+      ]
+    },
+    {
+      id: 'extended-family',
+      name: 'Extended Family',
+      horizontalPos: 'right',
+      verticalPos: 'middle',
+      size: 'medium',
+      plants: [
+        { name: 'Oma', health: 'dead', imagePath: 'snowdrop', size: 'small', position: 'right' },
+        { name: 'Frankes', health: 'healthy', imagePath: 'marigold', size: 'big', position: 'center-top-mid' },
+        { name: 'Schwiegereltern', health: 'healthy', imagePath: 'cucumber', size: 'big', position: 'bottom' },
+      ]
+    },
+    {
+      id: 'hobbies',
+      name: 'Hobbies',
+      horizontalPos: 'right',
+      verticalPos: 'top',
+      size: 'small',
+      plants: [
+        { name: 'Magic', health: 'dead', imagePath: 'black-lotus', size: 'small', position: 'bottom' },
+        { name: 'Schach', health: 'okay', imagePath: 'cypress', size: 'medium', position: 'center' },
+      ]
+    },
+    {
+      id: 'work',
+      name: 'Work',
+      horizontalPos: 'left',
+      verticalPos: 'top',
+      size: 'small',
+      plants: [
+        { name: 'Spaß bei der Arbeit', health: 'okay', imagePath: 'dandelion', size: 'medium', position: 'center' },
+        { name: 'Sinn in der Arbeit', health: 'dead', imagePath: 'oak', size: 'small', position: 'bottom' },
+      ]
+    }
+  ]
+};
+
+// Funktion zur Generierung von Pflanzen basierend auf Garden-Daten
+const generatePlantsFromData = (data: GardenData, canvasWidth: number, canvasHeight: number): Plant[] => {
+  const config = getCanvasConfig(canvasWidth);
+  const plants: Plant[] = [];
+
+  data.areals.forEach(areal => {
+    const arealCoords = getArealCoordinatesWithSize(
+      areal.horizontalPos,
+      areal.verticalPos,
+      config.areal.radius,
+      canvasHeight,
+      config.path,
+      areal.size
+    );
+
+    areal.plants.forEach(plantConfig => {
+      const plantPosition = getPlantPosition(
+        arealCoords.x,
+        arealCoords.y,
+        arealCoords.radius,
+        plantConfig.size,
+        plantConfig.position
+      );
+
+      const plant: Plant = {
+        name: plantConfig.name,
+        health: plantConfig.health,
+        src: plantImages[plantConfig.imagePath] || '',
+        x: plantPosition.x,
+        y: plantPosition.y,
+        size: plantConfig.size
+      };
+
+      plants.push(plant);
+    });
+  });
+
+  return plants;
+};
+
 // Funktion zur Berechnung der Canvas-abhängigen Konfiguration
-const getCanvasConfig = (canvasWidth: number, canvasHeight: number) => {
+const getCanvasConfig = (canvasWidth: number) => {
   const arealRadius = canvasWidth * 0.18; // 18% der Canvas-Breite
   const pathWidth = canvasWidth * 0.025; // 2.5% der Canvas-Breite
   const pathX = (canvasWidth - pathWidth) / 2;
 
-  // Areale-Positionen basierend auf Canvas-Größe
-  const familyX = canvasWidth * 0.266;
-  const sportX = canvasWidth * 0.734;
-  const arealY = canvasHeight * 0.75;
-
-  // Weg-Positionen
-  const pathPositions = {
-    bottom: {
-      left: { x: pathX - arealRadius * 0.8, y: canvasHeight * 0.85 },
-      right: { x: pathX + pathWidth + arealRadius * 0.8, y: canvasHeight * 0.85 }
-    },
-    middle: {
-      left: { x: pathX - arealRadius * 0.8, y: canvasHeight * 0.5 },
-      right: { x: pathX + pathWidth + arealRadius * 0.8, y: canvasHeight * 0.5 }
-    },
-    top: {
-      left: { x: pathX - arealRadius * 0.8, y: canvasHeight * 0.15 },
-      right: { x: pathX + pathWidth + arealRadius * 0.8, y: canvasHeight * 0.15 }
-    }
-  };
-
   return {
     areal: {
       radius: arealRadius,
-      family: { x: familyX, y: arealY },
-      sport: { x: sportX, y: arealY }
     },
     path: {
       width: pathWidth,
       x: pathX,
-      positions: pathPositions
     }
   };
 };
@@ -128,171 +275,6 @@ const getPlantPosition = (arealX: number, arealY: number, radius: number, plantS
   return result;
 }
 
-
-// Funktion zur Berechnung der Pflanzen-Positionen basierend auf Canvas-Größe
-const getPlantsForCanvas = (canvasWidth: number, canvasHeight: number): Plant[] => {
-  const config = getCanvasConfig(canvasWidth, canvasHeight);
-
-  // Koordinaten der Areale berechnen (mit verschiedenen Größen)
-  const familyCoords = getArealCoordinatesWithSize('left', 'bottom', config.areal.radius, canvasHeight, config.path, 'large');
-  const sportCoords = getArealCoordinatesWithSize('right', 'bottom', config.areal.radius, canvasHeight, config.path, 'large');
-  const mentalHealthCoords = getArealCoordinatesWithSize('left', 'middle', config.areal.radius, canvasHeight, config.path, 'large');
-  const hobbiesCoords = getArealCoordinatesWithSize('right', 'top', config.areal.radius, canvasHeight, config.path, 'small');
-  const workCoords = getArealCoordinatesWithSize('left', 'top', config.areal.radius, canvasHeight, config.path, 'small');
-  const extendedFamilyCoords = getArealCoordinatesWithSize('right', 'middle', config.areal.radius, canvasHeight, config.path, 'medium');
-
-  return [
-    // Core Familie - Positionen relativ zum Family-Areal
-    {
-      name: 'Bobo',
-      health: 'healthy',
-      src: rose,
-      ...getPlantPosition(familyCoords.x, familyCoords.y, familyCoords.radius, 'big', 'top')
-    },
-    {
-      name: 'Finja',
-      health: 'healthy',
-      src: sunflower,
-      ...getPlantPosition(familyCoords.x, familyCoords.y, familyCoords.radius, 'big', 'left')
-    },
-    {
-      name: 'Mats',
-      health: 'healthy',
-      src: happyBamboo,
-      ...getPlantPosition(familyCoords.x, familyCoords.y, familyCoords.radius, 'big', 'right')
-    },
-    {
-      name: 'Mama',
-      health: 'healthy',
-      src: lavendel,
-      ...getPlantPosition(familyCoords.x, familyCoords.y, familyCoords.radius, 'medium', 'center')
-    },
-    {
-      name: 'Papa',
-      health: 'okay',
-      src: cactus,
-      ...getPlantPosition(familyCoords.x, familyCoords.y, familyCoords.radius, 'small', 'bottom')
-    },
-
-    // sport Areal - Positionen relativ zum sport-Areal
-    {
-      name: 'Fahrrad fahren',
-      health: 'healthy',
-      src: thymian,
-      ...getPlantPosition(sportCoords.x, sportCoords.y, sportCoords.radius, 'big', 'top')
-    },
-    {
-      name: 'Joggen',
-      health: 'okay',
-      src: oatGrass,
-      ...getPlantPosition(sportCoords.x, sportCoords.y, sportCoords.radius, 'big', 'center')
-    },
-    {
-      name: 'Klettern',
-      health: 'healthy',
-      src: hop,
-      ...getPlantPosition(sportCoords.x, sportCoords.y, sportCoords.radius, 'big', 'left')
-    },
-    {
-      name: 'Yoga',
-      health: 'healthy',
-      src: lotusFlower,
-      ...getPlantPosition(sportCoords.x, sportCoords.y, sportCoords.radius, 'medium', 'right')
-    },
-    {
-      name: 'Schwimmen',
-      health: 'okay',
-      src: waterHyacinth,
-      ...getPlantPosition(sportCoords.x, sportCoords.y, sportCoords.radius, 'medium', 'bottom-left')
-    },
-    {
-      name: 'Fußball',
-      health: 'dead',
-      src: grass,
-      ...getPlantPosition(sportCoords.x, sportCoords.y, sportCoords.radius, 'small', 'bottom-right')
-    },
-
-    // Mental Health Areal - Positionen relativ zum Mental Health-Areal (medium size)
-    {
-      name: 'Meditation',
-      health: 'healthy',
-      src: bonsai,
-      ...getPlantPosition(mentalHealthCoords.x, mentalHealthCoords.y, mentalHealthCoords.radius, 'big', 'center')
-    },
-    {
-      name: 'Lesen',
-      health: 'healthy',
-      src: ivy,
-      ...getPlantPosition(mentalHealthCoords.x, mentalHealthCoords.y, mentalHealthCoords.radius, 'medium', 'left')
-    },
-    {
-      name: 'Journaling',
-      health: 'healthy',
-      src: sage,
-      ...getPlantPosition(mentalHealthCoords.x, mentalHealthCoords.y, mentalHealthCoords.radius, 'medium', 'right')
-    },
-    {
-      name: 'Waldbaden',
-      health: 'okay',
-      src: sequoia,
-      ...getPlantPosition(mentalHealthCoords.x, mentalHealthCoords.y, mentalHealthCoords.radius, 'medium', 'bottom')
-    },
-    {
-      name: 'Psychotherapie',
-      health: 'healthy',
-      src: aloeVera,
-      ...getPlantPosition(mentalHealthCoords.x, mentalHealthCoords.y, mentalHealthCoords.radius, 'big', 'top')
-    },
-
-    // Extended Family Area
-    {
-      name: 'Oma',
-      health: 'dead',
-      src: snowdrop,
-      ...getPlantPosition(extendedFamilyCoords.x, extendedFamilyCoords.y, extendedFamilyCoords.radius, 'small', 'right')
-    },
-    {
-      name: 'Frankes',
-      health: 'healthy',
-      src: marigold,
-      ...getPlantPosition(extendedFamilyCoords.x, extendedFamilyCoords.y, extendedFamilyCoords.radius, 'big', 'center-top-mid')
-    },
-    {
-      name: 'Schwiegereltern',
-      health: 'healthy',
-      src: cucumber,
-      ...getPlantPosition(extendedFamilyCoords.x, extendedFamilyCoords.y, extendedFamilyCoords.radius, 'big', 'bottom')
-    },
-
-    // Hobbies Area
-    {
-      name: 'Magic',
-      health: 'dead',
-      src: blackLotus,
-      ...getPlantPosition(hobbiesCoords.x, hobbiesCoords.y, hobbiesCoords.radius, 'small', 'bottom')
-    },
-    {
-      name: 'Schach',
-      health: 'okay',
-      src: cypress,
-      ...getPlantPosition(hobbiesCoords.x, hobbiesCoords.y, hobbiesCoords.radius, 'medium', 'center')
-    },
-
-    // Work Area
-    {
-      name: 'Spaß bei der Arbeit',
-      health: 'okay',
-      src: dandelion,
-      ...getPlantPosition(workCoords.x, workCoords.y, workCoords.radius, 'medium', 'center')
-    },
-    {
-      name: 'Sinn in der Arbeit',
-      health: 'dead',
-      src: oak,
-      ...getPlantPosition(workCoords.x, workCoords.y, workCoords.radius, 'small', 'bottom')
-    }
-  ];
-};
 
 // Helper functions for plant visualization
 const getPlantSize = (size: Plant['size']) => {
@@ -448,6 +430,24 @@ const drawPlantWithEffects = (ctx: CanvasRenderingContext2D, img: string, plant:
   };
 };
 
+// Funktion zum Zeichnen aller Areale basierend auf Garden-Daten
+const drawArealsFromData = (ctx: CanvasRenderingContext2D, data: GardenData, canvasWidth: number, canvasHeight: number, pathConfig: { x: number; width: number }) => {
+  data.areals.forEach(areal => {
+    const config = getCanvasConfig(canvasWidth);
+    drawAreal(
+      ctx,
+      areal.horizontalPos,
+      areal.verticalPos,
+      config.areal.radius,
+      areal.name,
+      canvasWidth,
+      canvasHeight,
+      pathConfig,
+      areal.size
+    );
+  });
+};
+
 // Funktion zum Zeichnen eines Areals mit automatischem Verbindungsweg
 const drawAreal = (ctx: CanvasRenderingContext2D, horizontalPos: 'left' | 'right', verticalPos: 'top' | 'middle' | 'bottom', baseRadius: number, label: string, canvasWidth: number, canvasHeight: number, pathConfig: { x: number; width: number }, size: 'small' | 'medium' | 'large' = 'large') => {
   // Tatsächliche Radius basierend auf Size berechnen
@@ -588,11 +588,53 @@ const getArealCoordinatesWithSize = (horizontalPos: 'left' | 'right', verticalPo
   };
 };
 
+// API-Service für echte REST API
+const API_BASE_URL = 'http://localhost:8000';
+
+const GardenApiService = {
+  async getGardenData(): Promise<GardenData> {
+    try {
+      const response = await fetch(`${API_BASE_URL}/api/garden`);
+      if (!response.ok) {
+        throw new Error('Failed to fetch garden data');
+      }
+      return await response.json();
+    } catch (error) {
+      console.error('Error fetching garden data:', error);
+      // Fallback to local data if API is not available
+      return gardenData;
+    }
+  },
+};
+
+
+
 const CanvasGarden = () => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const wateringPlanRef = useRef<HTMLCanvasElement>(null);
+  const [gardenConfig, setGardenConfig] = useState<GardenData | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  // Simuliere API-Aufruf (später durch echte REST API ersetzt)
+  useEffect(() => {
+    const fetchGardenData = async () => {
+      try {
+        setLoading(true);
+        const data = await GardenApiService.getGardenData();
+        setGardenConfig(data);
+      } catch (error) {
+        console.error('Fehler beim Laden der Gartendaten:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchGardenData();
+  }, []);
 
   useEffect(() => {
+    if (!gardenConfig || loading) return;
+
     // Hauptgarten Canvas
     const canvas = canvasRef.current;
     if (!canvas) return;
@@ -603,19 +645,14 @@ const CanvasGarden = () => {
     ctx.clearRect(0, 0, canvas.width, canvas.height);
 
     // Canvas-basierte Konfiguration berechnen
-    const canvasConfig = getCanvasConfig(canvas.width, canvas.height);
-    const plants = getPlantsForCanvas(canvas.width, canvas.height);
+    const canvasConfig = getCanvasConfig(canvas.width);
+    const plants = generatePlantsFromData(gardenConfig, canvas.width, canvas.height);
 
     // Hauptweg zeichnen
     drawPath(ctx, canvasConfig.path, canvas.height);
 
-    // Areale mit Verbindungswegen zeichnen
-    drawAreal(ctx, 'left', 'bottom', canvasConfig.areal.radius, 'Core Family', canvas.width, canvas.height, canvasConfig.path, 'large');
-    drawAreal(ctx, 'right', 'bottom', canvasConfig.areal.radius, 'Sport', canvas.width, canvas.height, canvasConfig.path, 'large');
-    drawAreal(ctx, 'left', 'middle', canvasConfig.areal.radius, 'Mental Health', canvas.width, canvas.height, canvasConfig.path, 'large');
-    drawAreal(ctx, 'right', 'middle', canvasConfig.areal.radius, 'Extended Family', canvas.width, canvas.height, canvasConfig.path, 'medium');
-    drawAreal(ctx, 'right', 'top', canvasConfig.areal.radius, 'Hobbies', canvas.width, canvas.height, canvasConfig.path, 'small');
-    drawAreal(ctx, 'left', 'top', canvasConfig.areal.radius, 'Work', canvas.width, canvas.height, canvasConfig.path, 'small');
+    // Areale mit Verbindungswegen zeichnen (basierend auf JSON-Daten)
+    drawArealsFromData(ctx, gardenConfig, canvas.width, canvas.height, canvasConfig.path);
 
     // Place plants in the garden areas
     plants.forEach(plant => {
@@ -632,8 +669,38 @@ const CanvasGarden = () => {
     const wateringCtx = wateringCanvas.getContext('2d');
     if (!wateringCtx) return;
 
+    wateringCtx.clearRect(0, 0, wateringCanvas.width, wateringCanvas.height);
     drawWateringPlan(wateringCtx, plants);
-  }, []);
+  }, [gardenConfig, loading]);
+
+  if (loading) {
+    return (
+      <div style={{
+        display: 'flex',
+        justifyContent: 'center',
+        alignItems: 'center',
+        height: '400px',
+        fontSize: '18px'
+      }}>
+        Lade Gartendaten...
+      </div>
+    );
+  }
+
+  if (!gardenConfig) {
+    return (
+      <div style={{
+        display: 'flex',
+        justifyContent: 'center',
+        alignItems: 'center',
+        height: '400px',
+        fontSize: '18px',
+        color: 'red'
+      }}>
+        Fehler beim Laden der Gartendaten
+      </div>
+    );
+  }
 
   return (
     <div>

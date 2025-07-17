@@ -1,5 +1,5 @@
 import './App.css'
-import CanvasGarden from './CanvasGarden'
+import CanvasGarden from './components/CanvasGarden'
 
 function App() {
   return (
