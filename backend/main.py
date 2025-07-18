@@ -3,6 +3,7 @@ import time
 import openai
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from pydantic import BaseModel
 from pathlib import Path
 from selenium import webdriver
 from selenium.webdriver.chrome.service import Service
@@ -15,6 +16,11 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 
 from database.garden_db import GardenDatabase
 from utils.image_analysis import analyze_checklist_image
+
+
+class WateringLimitUpdate(BaseModel):
+    new_limit: int
+
 
 app = FastAPI(title="Life as a Garden API", version="1.0.0")
 
@@ -139,6 +145,107 @@ def analyze_garden():
     """Analyze the garden checklist image"""
     image_path = "input/output-1.png"
     return analyze_checklist_image(image_path)
+
+
+@app.post("/api/garden/water")
+def water_plants_from_analysis():
+    """
+    Analyze the garden checklist image and water the checked plants.
+    Updates plant status based on watering algorithm.
+    """
+    try:
+        # First, analyze the checklist image
+        image_path = "input/output-1.png"
+        analysis_result = analyze_checklist_image(image_path)
+
+        if "error" in analysis_result:
+            return {"success": False, "error": analysis_result["error"]}
+
+        # Extract checked plant names from analysis
+        checked_plants = analysis_result.get_checked_items()
+
+        if not checked_plants:
+            return {
+                "success": True,
+                "message": "No plants were checked for watering",
+                "analysis": analysis_result.to_json(),
+                "watering_result": None,
+            }
+
+        # Water the checked plants
+        watering_result = garden_db.water_plants(checked_plants)
+
+        # Get updated garden stats
+        stats = garden_db.get_database_stats()
+        daily_stats = garden_db.get_daily_watering_stats()
+
+        return {
+            "success": True,
+            "analysis": analysis_result.to_json(),
+            "watering_result": watering_result,
+            "garden_stats": stats,
+            "daily_watering_stats": daily_stats,
+        }
+
+    except Exception as e:
+        return {"success": False, "error": f"Failed to process watering: {str(e)}"}
+
+
+@app.get("/api/garden/watering/stats")
+def get_watering_stats():
+    """Get current watering statistics and daily limits"""
+    daily_stats = garden_db.get_daily_watering_stats()
+    plants_needing_water = garden_db.get_plants_needing_water()
+
+    return {
+        "daily_stats": daily_stats,
+        "plants_needing_water": plants_needing_water,
+    }
+
+
+@app.put("/api/garden/watering/limit")
+def update_watering_limit(request: WateringLimitUpdate):
+    """Update the daily watering limit"""
+    if request.new_limit < 1 or request.new_limit > 50:
+        return {"success": False, "error": "Limit must be between 1 and 50"}
+
+    success = garden_db.set_daily_watering_limit(request.new_limit)
+    if success:
+        return {
+            "success": True,
+            "message": f"Daily watering limit updated to {request.new_limit}",
+        }
+    else:
+        return {"success": False, "error": "Failed to update watering limit"}
+
+
+@app.post("/api/garden/water/{plant_identifier}")
+def water_single_plant(plant_identifier: str, by_id: bool = False):
+    """
+    Water a specific plant by name or ID.
+
+    Args:
+        plant_identifier: Plant name or ID
+        by_id: Query parameter - if true, treat plant_identifier as ID, otherwise as name
+    """
+    try:
+        result = garden_db.water_single_plant(plant_identifier, by_id=by_id)
+
+        if result["success"]:
+            # Get updated garden stats
+            stats = garden_db.get_database_stats()
+            daily_stats = garden_db.get_daily_watering_stats()
+
+            return {
+                **result,
+                "garden_stats": stats,
+                "daily_watering_stats": daily_stats,
+            }
+        else:
+            return result
+
+    except Exception as e:
+        return {"success": False, "error": f"Failed to water plant: {str(e)}"}
 
 
 @app.get("/health")
