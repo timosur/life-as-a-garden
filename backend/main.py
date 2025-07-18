@@ -11,18 +11,27 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from webdriver_manager.chrome import ChromeDriverManager
-from pydantic_settings import BaseSettings
+from pydantic_settings import BaseSettings, SettingsConfigDict
+
+from database.garden_db import GardenDatabase
+from utils.image_analysis import analyze_checklist_image
 
 app = FastAPI(title="Life as a Garden API", version="1.0.0")
+
+# Initialize the database
+garden_db = GardenDatabase("garden.db")
 
 
 class Settings(BaseSettings):
     openai_api_key: str
 
+    model_config = SettingsConfigDict(env_file=".env")
+
 
 settings = Settings()
 
 openai.api_key = settings.openai_api_key
+
 
 # CORS middleware to allow frontend requests
 app.add_middleware(
@@ -33,234 +42,6 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Garden data structure
-garden_data = {
-    "areals": [
-        {
-            "id": "core-family",
-            "name": "Core Family",
-            "horizontalPos": "left",
-            "verticalPos": "bottom",
-            "size": "large",
-            "plants": [
-                {
-                    "name": "Bobo",
-                    "health": "healthy",
-                    "imagePath": "rose",
-                    "size": "big",
-                    "position": "top",
-                },
-                {
-                    "name": "Finja",
-                    "health": "healthy",
-                    "imagePath": "sunflower",
-                    "size": "big",
-                    "position": "left",
-                },
-                {
-                    "name": "Mats",
-                    "health": "healthy",
-                    "imagePath": "happy-bamboo",
-                    "size": "big",
-                    "position": "right",
-                },
-                {
-                    "name": "Mama",
-                    "health": "healthy",
-                    "imagePath": "lavendel",
-                    "size": "medium",
-                    "position": "center",
-                },
-                {
-                    "name": "Papa",
-                    "health": "okay",
-                    "imagePath": "cactus",
-                    "size": "small",
-                    "position": "bottom",
-                },
-            ],
-        },
-        {
-            "id": "sport",
-            "name": "Sport",
-            "horizontalPos": "right",
-            "verticalPos": "bottom",
-            "size": "large",
-            "plants": [
-                {
-                    "name": "Fahrrad fahren",
-                    "health": "healthy",
-                    "imagePath": "thymian",
-                    "size": "big",
-                    "position": "top",
-                },
-                {
-                    "name": "Joggen",
-                    "health": "okay",
-                    "imagePath": "oat-grass",
-                    "size": "big",
-                    "position": "center",
-                },
-                {
-                    "name": "Klettern",
-                    "health": "healthy",
-                    "imagePath": "hop",
-                    "size": "big",
-                    "position": "left",
-                },
-                {
-                    "name": "Yoga",
-                    "health": "healthy",
-                    "imagePath": "lotus-flower",
-                    "size": "medium",
-                    "position": "right",
-                },
-                {
-                    "name": "Schwimmen",
-                    "health": "okay",
-                    "imagePath": "water-hyacinth",
-                    "size": "medium",
-                    "position": "bottom-left",
-                },
-                {
-                    "name": "Fußball",
-                    "health": "dead",
-                    "imagePath": "grass",
-                    "size": "small",
-                    "position": "bottom-right",
-                },
-            ],
-        },
-        {
-            "id": "mental-health",
-            "name": "Mental Health",
-            "horizontalPos": "left",
-            "verticalPos": "middle",
-            "size": "large",
-            "plants": [
-                {
-                    "name": "Meditation",
-                    "health": "healthy",
-                    "imagePath": "bonsai",
-                    "size": "big",
-                    "position": "center",
-                },
-                {
-                    "name": "Lesen",
-                    "health": "healthy",
-                    "imagePath": "ivy",
-                    "size": "medium",
-                    "position": "left",
-                },
-                {
-                    "name": "Journaling",
-                    "health": "healthy",
-                    "imagePath": "sage",
-                    "size": "medium",
-                    "position": "right",
-                },
-                {
-                    "name": "Waldbaden",
-                    "health": "okay",
-                    "imagePath": "sequoia",
-                    "size": "medium",
-                    "position": "bottom",
-                },
-                {
-                    "name": "Psychotherapie",
-                    "health": "healthy",
-                    "imagePath": "aloe-vera",
-                    "size": "big",
-                    "position": "top",
-                },
-            ],
-        },
-        {
-            "id": "extended-family",
-            "name": "Extended Family",
-            "horizontalPos": "right",
-            "verticalPos": "top",
-            "size": "medium",
-            "plants": [
-                {
-                    "name": "Oma",
-                    "health": "dead",
-                    "imagePath": "snowdrop",
-                    "size": "small",
-                    "position": "left",
-                },
-                {
-                    "name": "Frankes",
-                    "health": "healthy",
-                    "imagePath": "marigold",
-                    "size": "big",
-                    "position": "center-top-mid",
-                },
-                {
-                    "name": "Schwiegereltern",
-                    "health": "healthy",
-                    "imagePath": "cucumber",
-                    "size": "big",
-                    "position": "bottom",
-                },
-            ],
-        },
-        {
-            "id": "hobbies",
-            "name": "Hobbies",
-            "horizontalPos": "right",
-            "verticalPos": "middle",
-            "size": "medium",
-            "plants": [
-                {
-                    "name": "DJ",
-                    "health": "okay",
-                    "imagePath": "red-maple",
-                    "size": "big",
-                    "position": "center",
-                },
-                {
-                    "name": "Magic",
-                    "health": "dead",
-                    "imagePath": "black-lotus",
-                    "size": "small",
-                    "position": "bottom",
-                },
-                {
-                    "name": "Schach",
-                    "health": "okay",
-                    "imagePath": "cypress",
-                    "size": "medium",
-                    "position": "left",
-                },
-            ],
-        },
-        {
-            "id": "work",
-            "name": "Work",
-            "horizontalPos": "left",
-            "verticalPos": "top",
-            "size": "small",
-            "plants": [
-                {
-                    "name": "Spaß bei der Arbeit",
-                    "health": "okay",
-                    "imagePath": "dandelion",
-                    "size": "medium",
-                    "position": "center",
-                },
-                {
-                    "name": "Sinn in der Arbeit",
-                    "health": "dead",
-                    "imagePath": "oak",
-                    "size": "small",
-                    "position": "bottom",
-                },
-            ],
-        },
-    ]
-}
-
 
 @app.get("/")
 def read_root():
@@ -270,7 +51,41 @@ def read_root():
 @app.get("/api/garden")
 def get_garden_data():
     """Get the complete garden data with all areals and plants"""
-    return garden_data
+    return garden_db.get_garden_data()
+
+
+@app.get("/api/garden/stats")
+def get_garden_stats():
+    """Get basic statistics about the garden database"""
+    return garden_db.get_database_stats()
+
+
+@app.get("/api/garden/areals")
+def get_areals():
+    """Get all areals"""
+    return garden_db.get_all_areals()
+
+
+@app.get("/api/garden/areals/{areal_id}/plants")
+def get_plants_by_areal(areal_id: str):
+    """Get all plants for a specific areal"""
+    return garden_db.get_plants_by_areal(areal_id)
+
+
+@app.get("/api/garden/plants/health/{health}")
+def get_plants_by_health(health: str):
+    """Get all plants with a specific health status (healthy, okay, dead)"""
+    return garden_db.get_plants_by_health(health)
+
+
+@app.put("/api/garden/plants/{plant_id}/health")
+def update_plant_health(plant_id: int, health: str):
+    """Update the health status of a plant"""
+    success = garden_db.update_plant_health(plant_id, health)
+    if success:
+        return {"message": f"Plant {plant_id} health updated to {health}"}
+    else:
+        return {"error": f"Failed to update plant {plant_id}"}
 
 
 @app.get("/api/garden/print")
@@ -321,77 +136,9 @@ def print_garden():
 
 @app.get("/api/garden/analyze")
 def analyze_garden():
-    # Load and encode the image
+    """Analyze the garden checklist image"""
     image_path = "input/output-1.png"
-    with open(image_path, "rb") as image_file:
-        image_bytes = image_file.read()
-        encoded_image = base64.b64encode(image_bytes).decode("utf-8")
-
-    # Define the prompt
-    prompt = """
-  You are given an image containing **only a checklist**, where each item consists of a label and a checkbox.
-
-  The checkboxes can appear in two states:
-
-  * ☐ or empty → "checkboxIsFilled": false
-  * ☒, marked, crossed, filled, or circled → "checkboxIsFilled": true
-
-  Your task is to extract each checklist item and return it in the following JSON format:
-
-  {
-    "content": [
-      {
-        "label": "Partnerschaft",
-        "checkboxIsFilled": true
-      },
-      {
-        "label": "Kinder",
-        "checkboxIsFilled": false
-      }
-    ]
-  }
-
-  Be robust: if a checkbox is clearly marked in any way (checked, crossed, filled, or circled), treat it as "checkboxIsFilled": true.
-
-  **Only return the JSON.** Ignore anything else.
-  """
-
-    # Send the request to GPT-4o with image and prompt
-    response = openai.chat.completions.create(
-        model="gpt-4o",
-        messages=[
-            {
-                "role": "user",
-                "content": [
-                    {"type": "text", "text": prompt},
-                    {
-                        "type": "image_url",
-                        "image_url": {"url": f"data:image/png;base64,{encoded_image}"},
-                    },
-                ],
-            }
-        ],
-        max_tokens=1000,
-    )
-
-    # Print the JSON result
-    result = response.choices[0].message.content
-    print("✅ Analysis result:", result)
-
-    # Get the json content from the response which is a markdown text and ```json
-    if result.startswith("```json"):
-        result = result[8:].strip()
-    if result.endswith("```"):
-        result = result[:-3].strip()
-    # Return the result as JSON
-    try:
-        import json
-
-        result = json.loads(result)
-    except json.JSONDecodeError as e:
-        print("Error decoding JSON:", e)
-        return {"error": "Invalid JSON format in response"}
-    return {"analysis": result}
+    return analyze_checklist_image(image_path)
 
 
 @app.get("/health")
