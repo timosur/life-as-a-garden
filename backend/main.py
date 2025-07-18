@@ -14,7 +14,7 @@ from selenium.webdriver.support import expected_conditions as EC
 from webdriver_manager.chrome import ChromeDriverManager
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
-from database.garden_db import GardenDatabase
+from database import GardenDatabase
 from utils.image_analysis import analyze_checklist_image
 
 
