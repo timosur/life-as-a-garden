@@ -1,0 +1,6 @@
+- Add backend logic to get the pdf from remarkable and convert it to png
+- Add backend logic to trigger the analyzation and download of png each night
+- Add backend logic to generate new pdf and update it to remarkable, renaming the old one to the date it has been parsed
+- Add backend logic to compress pdf to minimum size to avoid heavy memory usage
+- Add backend logic to read also the contents below the checklist where I want to explain what I did for each plant today
+- Somewhow move all the code onto a Linux Machine, where it can run - Including Deployment Pipelines, Dockerfiles etc
