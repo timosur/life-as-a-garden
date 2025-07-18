@@ -1,27 +1,4 @@
-import React, { useEffect, useRef, useState } from 'react';
-import happyBamboo from '../assets/plants/happy-bamboo.png';
-import rose from '../assets/plants/rose.png';
-import sunflower from '../assets/plants/sunflower.png';
-import cactus from '../assets/plants/cactus.png';
-import lavendel from '../assets/plants/lavendel.png';
-import thymian from '../assets/plants/thymian.png';
-import lotusFlower from '../assets/plants/lotus-flower.png';
-import oatGrass from '../assets/plants/oat-grass.png';
-import waterHyacinth from '../assets/plants/water-hyacinth.png'
-import hop from '../assets/plants/hop.png'
-import grass from '../assets/plants/grass.png'
-import bonsai from '../assets/plants/bonsai.png'
-import ivy from '../assets/plants/ivy.png'
-import sage from '../assets/plants/sage.png'
-import sequoia from '../assets/plants/sequoia.png'
-import aloeVera from '../assets/plants/aloe-vera.png'
-import snowdrop from '../assets/plants/snowdrop.png'
-import marigold from '../assets/plants/marigold.png'
-import cucumber from '../assets/plants/cucumber.png'
-import blackLotus from '../assets/plants/black-lotus.png'
-import cypress from '../assets/plants/cypress.png'
-import dandelion from '../assets/plants/dandelion.png'
-import oak from '../assets/plants/oak.png'
+import { useEffect, useRef, useState } from 'react';
 
 interface Plant {
   x: number;
@@ -53,122 +30,51 @@ interface GardenData {
   areals: ArealConfig[];
 }
 
-// Plant image mapping
-const plantImages: { [key: string]: string } = {
-  'happy-bamboo': happyBamboo,
-  'rose': rose,
-  'sunflower': sunflower,
-  'cactus': cactus,
-  'lavendel': lavendel,
-  'thymian': thymian,
-  'lotus-flower': lotusFlower,
-  'oat-grass': oatGrass,
-  'water-hyacinth': waterHyacinth,
-  'hop': hop,
-  'grass': grass,
-  'bonsai': bonsai,
-  'ivy': ivy,
-  'sage': sage,
-  'sequoia': sequoia,
-  'aloe-vera': aloeVera,
-  'snowdrop': snowdrop,
-  'marigold': marigold,
-  'cucumber': cucumber,
-  'black-lotus': blackLotus,
-  'cypress': cypress,
-  'dandelion': dandelion,
-  'oak': oak,
+// Utility function to get all unique plant images from garden data
+const getUniqueImagePaths = (data: GardenData): string[] => {
+  const imagePaths = new Set<string>();
+  data.areals.forEach(areal => {
+    areal.plants.forEach(plant => {
+      imagePaths.add(plant.imagePath);
+    });
+  });
+  return Array.from(imagePaths);
 };
 
-// Lokale JSON-Daten (später durch REST API ersetzt)
-const gardenData: GardenData = {
-  areals: [
-    {
-      id: 'core-family',
-      name: 'Core Family',
-      horizontalPos: 'left',
-      verticalPos: 'bottom',
-      size: 'large',
-      plants: [
-        { name: 'Bobo', health: 'healthy', imagePath: 'rose', size: 'big', position: 'top' },
-        { name: 'Finja', health: 'healthy', imagePath: 'sunflower', size: 'big', position: 'left' },
-        { name: 'Mats', health: 'healthy', imagePath: 'happy-bamboo', size: 'big', position: 'right' },
-        { name: 'Mama', health: 'healthy', imagePath: 'lavendel', size: 'medium', position: 'center' },
-        { name: 'Papa', health: 'okay', imagePath: 'cactus', size: 'small', position: 'bottom' },
-      ]
-    },
-    {
-      id: 'sport',
-      name: 'Sport',
-      horizontalPos: 'right',
-      verticalPos: 'bottom',
-      size: 'large',
-      plants: [
-        { name: 'Fahrrad fahren', health: 'healthy', imagePath: 'thymian', size: 'big', position: 'top' },
-        { name: 'Joggen', health: 'okay', imagePath: 'oat-grass', size: 'big', position: 'center' },
-        { name: 'Klettern', health: 'healthy', imagePath: 'hop', size: 'big', position: 'left' },
-        { name: 'Yoga', health: 'healthy', imagePath: 'lotus-flower', size: 'medium', position: 'right' },
-        { name: 'Schwimmen', health: 'okay', imagePath: 'water-hyacinth', size: 'medium', position: 'bottom-left' },
-        { name: 'Fußball', health: 'dead', imagePath: 'grass', size: 'small', position: 'bottom-right' },
-      ]
-    },
-    {
-      id: 'mental-health',
-      name: 'Mental Health',
-      horizontalPos: 'left',
-      verticalPos: 'middle',
-      size: 'large',
-      plants: [
-        { name: 'Meditation', health: 'healthy', imagePath: 'bonsai', size: 'big', position: 'center' },
-        { name: 'Lesen', health: 'healthy', imagePath: 'ivy', size: 'medium', position: 'left' },
-        { name: 'Journaling', health: 'healthy', imagePath: 'sage', size: 'medium', position: 'right' },
-        { name: 'Waldbaden', health: 'okay', imagePath: 'sequoia', size: 'medium', position: 'bottom' },
-        { name: 'Psychotherapie', health: 'healthy', imagePath: 'aloe-vera', size: 'big', position: 'top' },
-      ]
-    },
-    {
-      id: 'extended-family',
-      name: 'Extended Family',
-      horizontalPos: 'right',
-      verticalPos: 'middle',
-      size: 'medium',
-      plants: [
-        { name: 'Oma', health: 'dead', imagePath: 'snowdrop', size: 'small', position: 'right' },
-        { name: 'Frankes', health: 'healthy', imagePath: 'marigold', size: 'big', position: 'center-top-mid' },
-        { name: 'Schwiegereltern', health: 'healthy', imagePath: 'cucumber', size: 'big', position: 'bottom' },
-      ]
-    },
-    {
-      id: 'hobbies',
-      name: 'Hobbies',
-      horizontalPos: 'right',
-      verticalPos: 'top',
-      size: 'small',
-      plants: [
-        { name: 'Magic', health: 'dead', imagePath: 'black-lotus', size: 'small', position: 'bottom' },
-        { name: 'Schach', health: 'okay', imagePath: 'cypress', size: 'medium', position: 'center' },
-      ]
-    },
-    {
-      id: 'work',
-      name: 'Work',
-      horizontalPos: 'left',
-      verticalPos: 'top',
-      size: 'small',
-      plants: [
-        { name: 'Spaß bei der Arbeit', health: 'okay', imagePath: 'dandelion', size: 'medium', position: 'center' },
-        { name: 'Sinn in der Arbeit', health: 'dead', imagePath: 'oak', size: 'small', position: 'bottom' },
-      ]
+// Utility function to preload all images for better performance
+const preloadPlantImages = async (data: GardenData): Promise<void> => {
+  const uniqueImagePaths = getUniqueImagePaths(data);
+  const loadPromises = uniqueImagePaths.map(async (imagePath) => {
+    if (!imageCache[imagePath]) {
+      const imageSrc = await loadPlantImage(imagePath);
+      imageCache[imagePath] = imageSrc;
     }
-  ]
+  });
+
+  await Promise.all(loadPromises);
 };
+
+// Dynamic plant image loader
+const loadPlantImage = async (imagePath: string): Promise<string> => {
+  try {
+    const module = await import(`../assets/plants/${imagePath}.png`);
+    return module.default;
+  } catch (error) {
+    console.error(`Failed to load plant image: ${imagePath}`, error);
+    // Return a fallback or empty string
+    return '';
+  }
+};
+
+// Cache for loaded images to avoid re-importing
+const imageCache: { [key: string]: string } = {};
 
 // Funktion zur Generierung von Pflanzen basierend auf Garden-Daten
-const generatePlantsFromData = (data: GardenData, canvasWidth: number, canvasHeight: number): Plant[] => {
+const generatePlantsFromData = async (data: GardenData, canvasWidth: number, canvasHeight: number): Promise<Plant[]> => {
   const config = getCanvasConfig(canvasWidth);
   const plants: Plant[] = [];
 
-  data.areals.forEach(areal => {
+  for (const areal of data.areals) {
     const arealCoords = getArealCoordinatesWithSize(
       areal.horizontalPos,
       areal.verticalPos,
@@ -178,7 +84,14 @@ const generatePlantsFromData = (data: GardenData, canvasWidth: number, canvasHei
       areal.size
     );
 
-    areal.plants.forEach(plantConfig => {
+    for (const plantConfig of areal.plants) {
+      // Load image dynamically with caching
+      let imageSrc = imageCache[plantConfig.imagePath];
+      if (!imageSrc) {
+        imageSrc = await loadPlantImage(plantConfig.imagePath);
+        imageCache[plantConfig.imagePath] = imageSrc;
+      }
+
       const plantPosition = getPlantPosition(
         arealCoords.x,
         arealCoords.y,
@@ -190,15 +103,15 @@ const generatePlantsFromData = (data: GardenData, canvasWidth: number, canvasHei
       const plant: Plant = {
         name: plantConfig.name,
         health: plantConfig.health,
-        src: plantImages[plantConfig.imagePath] || '',
+        src: imageSrc,
         x: plantPosition.x,
         y: plantPosition.y,
         size: plantConfig.size
       };
 
       plants.push(plant);
-    });
-  });
+    }
+  }
 
   return plants;
 };
@@ -592,7 +505,7 @@ const getArealCoordinatesWithSize = (horizontalPos: 'left' | 'right', verticalPo
 const API_BASE_URL = 'http://localhost:8000';
 
 const GardenApiService = {
-  async getGardenData(): Promise<GardenData> {
+  async getGardenData(): Promise<GardenData | null> {
     try {
       const response = await fetch(`${API_BASE_URL}/api/garden`);
       if (!response.ok) {
@@ -602,7 +515,7 @@ const GardenApiService = {
     } catch (error) {
       console.error('Error fetching garden data:', error);
       // Fallback to local data if API is not available
-      return gardenData;
+      return null;
     }
   },
 };
@@ -613,15 +526,29 @@ const CanvasGarden = () => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const wateringPlanRef = useRef<HTMLCanvasElement>(null);
   const [gardenConfig, setGardenConfig] = useState<GardenData | null>(null);
+  const [plants, setPlants] = useState<Plant[]>([]);
   const [loading, setLoading] = useState(true);
 
-  // Simuliere API-Aufruf (später durch echte REST API ersetzt)
+  // Load garden data and generate plants
   useEffect(() => {
     const fetchGardenData = async () => {
       try {
         setLoading(true);
         const data = await GardenApiService.getGardenData();
         setGardenConfig(data);
+
+        if (!data) {
+          throw new Error('No garden data available');
+        }
+
+        // Preload all images for better performance
+        await preloadPlantImages(data);
+
+        // Generate plants with dynamic image loading
+        if (data) {
+          const generatedPlants = await generatePlantsFromData(data, 1100, 1400);
+          setPlants(generatedPlants);
+        }
       } catch (error) {
         console.error('Fehler beim Laden der Gartendaten:', error);
       } finally {
@@ -632,8 +559,9 @@ const CanvasGarden = () => {
     fetchGardenData();
   }, []);
 
+  // Render the canvas when data is ready
   useEffect(() => {
-    if (!gardenConfig || loading) return;
+    if (!gardenConfig || loading || plants.length === 0) return;
 
     // Hauptgarten Canvas
     const canvas = canvasRef.current;
@@ -646,7 +574,6 @@ const CanvasGarden = () => {
 
     // Canvas-basierte Konfiguration berechnen
     const canvasConfig = getCanvasConfig(canvas.width);
-    const plants = generatePlantsFromData(gardenConfig, canvas.width, canvas.height);
 
     // Hauptweg zeichnen
     drawPath(ctx, canvasConfig.path, canvas.height);
@@ -671,7 +598,7 @@ const CanvasGarden = () => {
 
     wateringCtx.clearRect(0, 0, wateringCanvas.width, wateringCanvas.height);
     drawWateringPlan(wateringCtx, plants);
-  }, [gardenConfig, loading]);
+  }, [gardenConfig, loading, plants]);
 
   if (loading) {
     return (

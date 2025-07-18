@@ -1,5 +1,6 @@
 import base64
 import time
+import openai
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from pathlib import Path
@@ -10,8 +11,18 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from webdriver_manager.chrome import ChromeDriverManager
+from pydantic_settings import BaseSettings
 
 app = FastAPI(title="Life as a Garden API", version="1.0.0")
+
+
+class Settings(BaseSettings):
+    openai_api_key: str
+
+
+settings = Settings()
+
+openai.api_key = settings.openai_api_key
 
 # CORS middleware to allow frontend requests
 app.add_middleware(
@@ -168,7 +179,7 @@ garden_data = {
             "id": "extended-family",
             "name": "Extended Family",
             "horizontalPos": "right",
-            "verticalPos": "middle",
+            "verticalPos": "top",
             "size": "medium",
             "plants": [
                 {
@@ -176,7 +187,7 @@ garden_data = {
                     "health": "dead",
                     "imagePath": "snowdrop",
                     "size": "small",
-                    "position": "right",
+                    "position": "left",
                 },
                 {
                     "name": "Frankes",
@@ -198,9 +209,16 @@ garden_data = {
             "id": "hobbies",
             "name": "Hobbies",
             "horizontalPos": "right",
-            "verticalPos": "top",
-            "size": "small",
+            "verticalPos": "middle",
+            "size": "medium",
             "plants": [
+                {
+                    "name": "DJ",
+                    "health": "okay",
+                    "imagePath": "red-maple",
+                    "size": "big",
+                    "position": "center",
+                },
                 {
                     "name": "Magic",
                     "health": "dead",
@@ -213,7 +231,7 @@ garden_data = {
                     "health": "okay",
                     "imagePath": "cypress",
                     "size": "medium",
-                    "position": "center",
+                    "position": "left",
                 },
             ],
         },
@@ -257,7 +275,7 @@ def get_garden_data():
 
 @app.get("/api/garden/print")
 def print_garden():
-    output_path = Path("output/example.pdf").resolve()
+    output_path = Path("output/Lebensgarten.pdf").resolve()
 
     # Set up headless Chrome with PDF printing enabled
     options = Options()
@@ -299,6 +317,81 @@ def print_garden():
 
     driver.quit()
     print(f"✅ PDF saved to {output_path}")
+
+
+@app.get("/api/garden/analyze")
+def analyze_garden():
+    # Load and encode the image
+    image_path = "input/output-1.png"
+    with open(image_path, "rb") as image_file:
+        image_bytes = image_file.read()
+        encoded_image = base64.b64encode(image_bytes).decode("utf-8")
+
+    # Define the prompt
+    prompt = """
+  You are given an image containing **only a checklist**, where each item consists of a label and a checkbox.
+
+  The checkboxes can appear in two states:
+
+  * ☐ or empty → "checkboxIsFilled": false
+  * ☒, marked, crossed, filled, or circled → "checkboxIsFilled": true
+
+  Your task is to extract each checklist item and return it in the following JSON format:
+
+  {
+    "content": [
+      {
+        "label": "Partnerschaft",
+        "checkboxIsFilled": true
+      },
+      {
+        "label": "Kinder",
+        "checkboxIsFilled": false
+      }
+    ]
+  }
+
+  Be robust: if a checkbox is clearly marked in any way (checked, crossed, filled, or circled), treat it as "checkboxIsFilled": true.
+
+  **Only return the JSON.** Ignore anything else.
+  """
+
+    # Send the request to GPT-4o with image and prompt
+    response = openai.chat.completions.create(
+        model="gpt-4o",
+        messages=[
+            {
+                "role": "user",
+                "content": [
+                    {"type": "text", "text": prompt},
+                    {
+                        "type": "image_url",
+                        "image_url": {"url": f"data:image/png;base64,{encoded_image}"},
+                    },
+                ],
+            }
+        ],
+        max_tokens=1000,
+    )
+
+    # Print the JSON result
+    result = response.choices[0].message.content
+    print("✅ Analysis result:", result)
+
+    # Get the json content from the response which is a markdown text and ```json
+    if result.startswith("```json"):
+        result = result[8:].strip()
+    if result.endswith("```"):
+        result = result[:-3].strip()
+    # Return the result as JSON
+    try:
+        import json
+
+        result = json.loads(result)
+    except json.JSONDecodeError as e:
+        print("Error decoding JSON:", e)
+        return {"error": "Invalid JSON format in response"}
+    return {"analysis": result}
 
 
 @app.get("/health")
