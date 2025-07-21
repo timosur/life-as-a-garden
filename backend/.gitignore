@@ -2,3 +2,6 @@ __pycache__
 input
 output
 .env
+*.db
+*.sqlite3
+*.log
