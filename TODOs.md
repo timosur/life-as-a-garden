@@ -1,0 +1,3 @@
+- Make remarks avaibale in docker container setup
+- Fix analyze steps in docker setup (e.g. Zip download currently not working)
+- Deploy onto Linux machine
