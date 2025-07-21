@@ -1,2 +1,2 @@
-- Add backend logic to trigger the analyzation and download of png each night
 - Somewhow move all the code onto a Linux Machine, where it can run - Including Deployment Pipelines, Dockerfiles etc
+- Add backend logic to trigger the analyzation and download of png each night
