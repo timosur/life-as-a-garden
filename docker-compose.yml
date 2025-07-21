@@ -1,0 +1,75 @@
+version: '3.8'
+
+services:
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: garden-backend
+    ports:
+      - "8000:8000"
+    environment:
+      - PYTHONPATH=/app
+      - PYTHONUNBUFFERED=1
+      - FRONTEND_URL=http://frontend:80/
+      - RMAPI_SERVICE_URL=http://rmapi-wrapper:8001
+    env_file:
+      - ./backend/.env
+    volumes:
+      # Mount volumes for persistent data
+      - ./backend/garden.db:/app/garden.db
+      - ./backend/input:/app/input
+      - ./backend/output:/app/output
+    restart: unless-stopped
+    depends_on:
+      - rmapi-wrapper
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/docs"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  rmapi-wrapper:
+    build:
+      context: ./rmapi-wrapper
+      dockerfile: Dockerfile
+    container_name: garden-rmapi-wrapper
+    ports:
+      - "8001:8001"
+    volumes:
+      # Mount Docker socket to allow container to run Docker commands
+      - /var/run/docker.sock:/var/run/docker.sock
+      # Mount rmapi config and data directories
+      - ~/.config/rmapi:/home/app/.config/rmapi
+      - ~/rmapi:/tmp/rmapi
+      # Mount temporary upload directory
+      - /tmp/rmapi-uploads:/tmp/rmapi-uploads
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8001/api/rmapi/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+
+  frontend:
+    build:
+      context: ./garden
+      dockerfile: Dockerfile
+    container_name: garden-frontend
+    ports:
+      - "5173:80"
+    depends_on:
+      - backend
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:80"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+
+networks:
+  default:
+    name: garden-network

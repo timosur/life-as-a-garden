@@ -2,12 +2,12 @@ import openai
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
-from pydantic_settings import BaseSettings, SettingsConfigDict
 
 from database import GardenDatabase
 from utils.image_analysis import analyze_checklist_image
-from utils.pdf_generator import print_garden_to_pdf
-from utils.remarkable_uploader import archive_and_upload_remarkable
+from utils.pdf_generator import print_garden_to_pdf_sync as print_garden_to_pdf
+from utils.rmapi_client import archive_and_upload_remarkable
+from settings import settings
 
 
 class WateringLimitUpdate(BaseModel):
@@ -18,15 +18,6 @@ app = FastAPI(title="Life as a Garden API", version="1.0.0")
 
 # Initialize the database
 garden_db = GardenDatabase("garden.db")
-
-
-class Settings(BaseSettings):
-    openai_api_key: str
-
-    model_config = SettingsConfigDict(env_file=".env")
-
-
-settings = Settings()
 
 openai.api_key = settings.openai_api_key
 

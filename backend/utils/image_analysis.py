@@ -7,7 +7,7 @@ import shutil
 from pathlib import Path
 
 from garden_types.analysis import AnalysisData
-
+from utils.rmapi_client import RmapiClient
 
 from typing import Union
 
@@ -15,38 +15,26 @@ from typing import Union
 def analyze_checklist_image(
     openai_client: openai.OpenAI = None,
 ) -> Union[AnalysisData, dict]:
-    # Step 1: Download latest Lebensgarten from reMarkable
+    # Step 1: Download latest Lebensgarten from reMarkable using rmapi client
     print("📥 Downloading latest Lebensgarten from reMarkable...")
-    download_cmd = [
-        "docker",
-        "run",
-        "-v",
-        f"{os.path.expanduser('~')}/.config/rmapi/:/home/app/.config/rmapi/",
-        "-v",
-        f"{os.path.expanduser('~')}/rmapi:/tmp/rmapi/",
-        "rmapi",
-        "geta",
-        "Lebensgarten/Lebensgarten",
-    ]
-
-    print(f"🔍 Running command: {' '.join(download_cmd)}")
 
     # Define paths for cleanup
     backend_path = os.path.dirname(os.path.abspath(__file__))
     input_path = os.path.join(backend_path, "input")
 
     try:
-        result = subprocess.run(
-            download_cmd, capture_output=True, text=True, timeout=60
-        )
-        print(f"📊 Command exit code: {result.returncode}")
-        if result.stdout:
-            print(f"📤 stdout: {result.stdout}")
-        if result.stderr:
-            print(f"📥 stderr: {result.stderr}")
+        # Use the rmapi client to download the file
+        client = RmapiClient()
+        result = client.geta("Lebensgarten/Lebensgarten")
+
+        print(f"📊 Download result: {result.get('success', False)}")
+        if result.get("output"):
+            print(f"📤 Output: {result['output']}")
+        if result.get("error"):
+            print(f"📥 Error: {result['error']}")
         print("✅ Download completed (ignoring any errors as expected)")
-    except subprocess.TimeoutExpired:
-        print("⏰ Download command timed out after 60 seconds")
+    except Exception as e:
+        print(f"⏰ Download failed: {str(e)}")
         # Continue anyway, we might still have a zip file from previous runs
 
     try:
