@@ -185,7 +185,15 @@ class WateringService:
     def _calculate_plant_status_after_watering(
         self, plant: Dict[str, Any], watering_date: str
     ) -> Dict[str, Any]:
-        """Calculate new plant status after watering with improved health and size logic."""
+        """
+        Calculate new plant status after watering with simplified logic.
+
+        Simplified Recovery Logic:
+        - Dead plants: Need 3 consecutive days to become "okay", 5 days to become "healthy"
+        - Okay plants: Need 3 consecutive days to become "healthy"
+        - Healthy plants: Stay healthy with any watering
+        - Growth is based on total water count and consistency
+        """
         # Calculate new water streak
         last_watered = plant["last_watered"]
         current_date = datetime.strptime(watering_date, "%Y-%m-%d").date()
@@ -198,7 +206,7 @@ class WateringService:
                 # Consecutive day - increase streak
                 new_streak = plant["water_streak"] + 1
             else:
-                # Gap in watering - reset streak but don't penalize too much
+                # Gap in watering - reset streak
                 new_streak = 1
         else:
             # First time watering
@@ -207,57 +215,55 @@ class WateringService:
         # Update total water count
         new_total_count = plant["total_water_count"] + 1
 
-        # Calculate health based on watering consistency and current health
+        # Simplified health recovery logic
         current_health = plant["health"]
 
         if current_health == "dead":
-            # Dead plants can recover but need consistent watering
+            # Dead plants need consistent watering to recover
             if new_streak >= 5:
-                new_health = "okay"
+                new_health = "healthy"
             elif new_streak >= 3:
-                new_health = "dead"  # Still dead but improving
+                new_health = "okay"
             else:
-                new_health = "dead"
+                new_health = "dead"  # Still dead, needs more consistency
         elif current_health == "okay":
-            # Okay plants can improve to healthy or decline
-            if new_streak >= 7:
+            # Okay plants can improve to healthy fairly quickly
+            if new_streak >= 3:
                 new_health = "healthy"
-            elif new_streak >= 3:
-                new_health = "okay"
             else:
-                new_health = "okay"  # Stay okay for now
-        else:  # healthy or other states
-            # Healthy plants maintain health with regular watering
-            if new_streak >= 5:
-                new_health = "healthy"
-            elif new_streak >= 2:
-                new_health = "healthy"
-            elif new_total_count >= 3:
-                new_health = "okay"
-            else:
-                new_health = "okay"
+                new_health = "okay"  # Stay okay
+        else:  # healthy
+            # Healthy plants stay healthy with any watering
+            new_health = "healthy"
 
-        # Calculate growth stage (1-5 based on total water count and streak)
-        # More emphasis on consistency (streak) for growth
-        growth_from_streak = min(3, new_streak // 2)  # Max 3 from streak
-        growth_from_total = min(2, new_total_count // 5)  # Max 2 from total count
-        new_growth_stage = min(5, max(1, growth_from_streak + growth_from_total + 1))
+        # Simplified growth stage calculation (1-5 based on total water count)
+        # Growth is more about total care over time
+        if new_total_count >= 20:
+            new_growth_stage = 5
+        elif new_total_count >= 15:
+            new_growth_stage = 4
+        elif new_total_count >= 10:
+            new_growth_stage = 3
+        elif new_total_count >= 5:
+            new_growth_stage = 2
+        else:
+            new_growth_stage = 1
 
-        # Calculate size based on growth stage and health
+        # Simplified size calculation based on health and growth stage
         if new_health == "dead":
-            # Dead plants shrink regardless of growth stage
+            # Dead plants stay small
             new_size = "small"
         elif new_health == "okay":
-            # Okay plants can be small to medium
-            if new_growth_stage >= 4:
+            # Okay plants can grow to medium if well-established
+            if new_growth_stage >= 3:
                 new_size = "medium"
             else:
                 new_size = "small"
         else:  # healthy
-            # Healthy plants can reach full size potential
+            # Healthy plants can reach full potential
             if new_growth_stage >= 4:
                 new_size = "big"
-            elif new_growth_stage >= 3:
+            elif new_growth_stage >= 2:
                 new_size = "medium"
             else:
                 new_size = "small"

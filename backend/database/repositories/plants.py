@@ -75,8 +75,8 @@ class PlantRepository:
                 """SELECT p.*, a.name as areal_name 
                    FROM plants p 
                    JOIN areals a ON p.areal_id = a.id 
-                   WHERE p.health IN ('okay', 'dead') OR p.days_without_water >= 2
-                   ORDER BY p.days_without_water DESC, p.health = 'dead' DESC, p.water_streak ASC""",
+                   WHERE p.health IN ('okay', 'dead') OR p.days_without_water >= 3
+                   ORDER BY p.health = 'dead' DESC, p.days_without_water DESC, p.water_streak ASC""",
             )
             return [dict(row) for row in cursor.fetchall()]
 
@@ -149,7 +149,16 @@ class PlantRepository:
             return False
 
     def update_non_watered_plants(self, current_date: str) -> bool:
-        """Update plants that weren't watered today."""
+        """
+        Update plants that weren't watered today with simplified logic.
+
+        Simplified Watering Timeline:
+        - Healthy plants: Stay healthy for 5 days, become "okay" after 6 days
+        - Okay plants: Become "dead" after 4 days without water
+        - Dead plants: Stay dead
+        - Water streak: Reset after 3 days without water
+        - Size reduction: Big→Medium after 8 days, Medium→Small after 10 days
+        """
         try:
             with self.db.get_connection() as conn:
                 # Get plants not watered today
@@ -165,34 +174,30 @@ class PlantRepository:
                 for plant in plants_not_watered:
                     days_without_water = plant["days_without_water"] + 1
                     current_health = plant["health"]
-
-                    # Calculate declining health based on current health and days without water
-                    if current_health == "healthy":
-                        if days_without_water >= 5:
-                            new_health = "okay"
-                        elif days_without_water >= 8:
-                            new_health = "dead"
-                        else:
-                            new_health = "healthy"  # Stay healthy for a while
-                    elif current_health == "okay":
-                        if days_without_water >= 3:
-                            new_health = "dead"
-                        else:
-                            new_health = "okay"
-                    else:  # dead or other states
-                        new_health = "dead"  # Stay dead
-
-                    # Reset water streak if too many days without water
-                    new_streak = 0 if days_without_water >= 2 else plant["water_streak"]
-
-                    # Size reduction for plants not watered
                     current_size = plant["size"]
-                    if days_without_water >= 4 and current_size == "big":
+
+                    # Simplified health degradation logic
+                    new_health = current_health
+                    if current_health == "healthy":
+                        # Healthy plants downgrade to okay after 6 days without water
+                        if days_without_water >= 6:
+                            new_health = "okay"
+                    elif current_health == "okay":
+                        # Okay plants become dead after 4 days without water
+                        if days_without_water >= 4:
+                            new_health = "dead"
+                    # Dead plants stay dead
+
+                    # Reset water streak after 3 days without water
+                    new_streak = 0 if days_without_water >= 3 else plant["water_streak"]
+
+                    # Simplified size reduction logic - only after extended periods
+                    new_size = current_size
+                    if current_size == "big" and days_without_water >= 8:
                         new_size = "medium"
-                    elif days_without_water >= 6 and current_size == "medium":
+                    elif current_size == "medium" and days_without_water >= 10:
                         new_size = "small"
-                    else:
-                        new_size = current_size
+                    # Small plants stay small
 
                     conn.execute(
                         """UPDATE plants SET 

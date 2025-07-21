@@ -1,21 +1,13 @@
-import base64
-import time
 import openai
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
-from pathlib import Path
-from selenium import webdriver
-from selenium.webdriver.chrome.service import Service
-from selenium.webdriver.chrome.options import Options
-from selenium.webdriver.common.by import By
-from selenium.webdriver.support.ui import WebDriverWait
-from selenium.webdriver.support import expected_conditions as EC
-from webdriver_manager.chrome import ChromeDriverManager
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 from database import GardenDatabase
 from utils.image_analysis import analyze_checklist_image
+from utils.pdf_generator import print_garden_to_pdf
+from utils.remarkable_uploader import archive_and_upload_remarkable
 
 
 class WateringLimitUpdate(BaseModel):
@@ -96,55 +88,32 @@ def update_plant_health(plant_id: int, health: str):
 
 @app.get("/api/garden/print")
 def print_garden():
-    output_path = Path("output/Lebensgarten.pdf").resolve()
-
-    # Set up headless Chrome with PDF printing enabled
-    options = Options()
-    options.add_argument("--headless=new")
-    options.add_argument("--disable-gpu")
-    options.add_argument("--no-sandbox")
-
-    # Start browser
-    service = Service(ChromeDriverManager().install())
-    driver = webdriver.Chrome(service=service, options=options)
-
-    # Load the website
-    driver.get("http://localhost:5173/")
-
-    # --- Wait until body is fully loaded (customize if needed) ---
+    """Print the garden to PDF"""
     try:
-        WebDriverWait(driver, 10).until(
-            EC.presence_of_element_located((By.TAG_NAME, "body"))
-        )
-        time.sleep(2)  # Optional: extra delay for JS-heavy pages
+        pdf_path = print_garden_to_pdf()
+        return {
+            "success": True,
+            "message": "Garden printed successfully",
+            "pdf_path": pdf_path,
+        }
     except Exception as e:
-        print("Warning: Timeout waiting for page to load:", e)
-
-    # --- Generate PDF via DevTools Protocol ---
-    pdf_data = driver.execute_cdp_cmd(
-        "Page.printToPDF",
-        {
-            "printBackground": True,
-            "landscape": False,
-            "paperWidth": 8.27,  # A4 size
-            "paperHeight": 11.69,
-        },
-    )
-
-    # --- Write to file ---
-    output_path.parent.mkdir(parents=True, exist_ok=True)
-    with open(output_path, "wb") as f:
-        f.write(base64.b64decode(pdf_data["data"]))
-
-    driver.quit()
-    print(f"✅ PDF saved to {output_path}")
+        return {"success": False, "error": f"Failed to print garden: {str(e)}"}
 
 
 @app.get("/api/garden/analyze")
 def analyze_garden():
     """Analyze the garden checklist image"""
-    image_path = "input/output-1.png"
-    return analyze_checklist_image(image_path)
+
+    try:
+        print("🔍 Analyzing checklist image...")
+        result = analyze_checklist_image()
+        print("✅ Analysis completed")
+
+        return result
+
+    except Exception as e:
+        print(f"❌ Error during analysis: {str(e)}")
+        return {"error": f"Failed to analyze garden: {str(e)}"}
 
 
 @app.post("/api/garden/water")
@@ -152,13 +121,14 @@ def water_plants_from_analysis():
     """
     Analyze the garden checklist image and water the checked plants.
     Updates plant status based on watering algorithm.
+    After watering, prints the garden to PDF and uploads to reMarkable.
     """
     try:
         # First, analyze the checklist image
-        image_path = "input/output-1.png"
-        analysis_result = analyze_checklist_image(image_path)
+        analysis_result = analyze_checklist_image()
 
-        if "error" in analysis_result:
+        # Check if analysis_result is a dictionary with an error (error case)
+        if isinstance(analysis_result, dict) and "error" in analysis_result:
             return {"success": False, "error": analysis_result["error"]}
 
         # Extract checked plant names from analysis
@@ -179,12 +149,36 @@ def water_plants_from_analysis():
         stats = garden_db.get_database_stats()
         daily_stats = garden_db.get_daily_watering_stats()
 
+        # Print and upload garden after watering
+        try:
+            # Generate PDF
+            pdf_path = print_garden_to_pdf()
+
+            # Upload to reMarkable
+            upload_result = archive_and_upload_remarkable(pdf_path)
+
+            print_result = {
+                "success": True,
+                "pdf_path": pdf_path,
+                "uploaded_to_remarkable": upload_result["uploaded_to_remarkable"],
+                "message": "Garden printed and uploaded successfully"
+                if upload_result["success"]
+                else "Garden printed but upload failed",
+                "upload_details": upload_result,
+            }
+        except Exception as e:
+            print_result = {
+                "success": False,
+                "error": f"Failed to print and upload garden: {str(e)}",
+            }
+
         return {
             "success": True,
             "analysis": analysis_result.to_json(),
             "watering_result": watering_result,
             "garden_stats": stats,
             "daily_watering_stats": daily_stats,
+            "print_result": print_result,
         }
 
     except Exception as e:

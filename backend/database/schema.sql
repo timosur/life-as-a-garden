@@ -43,12 +43,12 @@ CREATE TABLE IF NOT EXISTS watering_history (
 -- Daily watering limits table
 CREATE TABLE IF NOT EXISTS daily_watering_config (
     id INTEGER PRIMARY KEY,
-    max_plants_per_day INTEGER DEFAULT 4,
+    max_plants_per_day INTEGER DEFAULT 6,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
 -- Insert default config
-INSERT OR IGNORE INTO daily_watering_config (id, max_plants_per_day) VALUES (1, 4);
+INSERT OR IGNORE INTO daily_watering_config (id, max_plants_per_day) VALUES (1, 6);
 
 -- Create indexes for better performance
 CREATE INDEX IF NOT EXISTS idx_plants_areal_id ON plants(areal_id);

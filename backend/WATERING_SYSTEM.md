@@ -1,8 +1,15 @@
-# Updated Watering System
+# Simplified Watering System
 
 ## Overview
 
-The watering system has been updated with improved logic for plant health and size management based on watering frequency. The system now properly tracks watering history and enforces daily limits.
+The watering system has been redesigned with simplified, intuitive logic for plant health and size management. The system emphasizes clear timelines and predictable behavior, making garden management more enjoyable while still encouraging consistent care.
+
+## Key Principles
+
+- **Forgiving Grace Periods**: Plants have reasonable time before health/size decline
+- **Clear Recovery Paths**: Simple, consistent requirements for plant improvement
+- **Long-term Growth**: Plant maturity is based on total care over time
+- **Predictable Timelines**: All changes follow logical, easy-to-understand schedules
 
 ## Key Features
 
@@ -32,118 +39,93 @@ Plants have three sizes that change based on growth and health:
 
 ### When Plants Are Watered
 
-- **Water streak**: Consecutive days of watering (resets after 2+ days gap)
+- **Water streak**: Consecutive days of watering (resets after gap in watering)
 - **Total water count**: Lifetime total of watering events
-- **Growth stage**: 1-5 scale based on care consistency
+- **Growth stage**: 1-5 scale based on total water count (long-term care)
 
-#### Health Progression (with watering):
+#### Health Recovery (with watering):
 
-- **Dead → Okay**: Requires 5+ consecutive days of watering
-- **Okay → Healthy**: Requires 7+ consecutive days of watering
-- **Healthy**: Maintained with regular watering (2+ day streak)
+- **Dead → Okay**: Requires 3 consecutive days of watering
+- **Dead → Healthy**: Requires 5 consecutive days of watering
+- **Okay → Healthy**: Requires 3 consecutive days of watering
+- **Healthy**: Stays healthy with any watering
 
 #### Size Progression (with watering):
 
-- **Dead plants**: Always remain small until health improves
-- **Okay plants**: Can grow to medium size (growth stage 4+)
+- **Dead plants**: Always remain small
+- **Okay plants**:
+  - Growth stage 3+: Medium size
+  - Growth stage 1-2: Small size
 - **Healthy plants**: Can reach full size potential:
   - Growth stage 4+: Big size
-  - Growth stage 3: Medium size
-  - Growth stage 1-2: Small size
+  - Growth stage 2-3: Medium size
+  - Growth stage 1: Small size
+
+#### Growth Stage Calculation:
+
+Growth stages are based on total water count (long-term care):
+
+- **Stage 1**: 1-4 total waters (new plants)
+- **Stage 2**: 5-9 total waters (establishing)
+- **Stage 3**: 10-14 total waters (developing)
+- **Stage 4**: 15-19 total waters (mature)
+- **Stage 5**: 20+ total waters (fully established)
 
 ### When Plants Are NOT Watered
 
-Plants that aren't watered experience decline:
+Plants that aren't watered experience gradual decline:
 
 #### Health Decline:
 
-- **Healthy plants**:
-  - 5+ days without water → Okay
-  - 8+ days without water → Dead
-- **Okay plants**:
-  - 3+ days without water → Dead
+- **Healthy plants**: Stay healthy for 5 days, become "okay" after 6 days without water
+- **Okay plants**: Become "dead" after 4 days without water
 - **Dead plants**: Remain dead
 
 #### Size Decline:
 
-- **Big → Medium**: After 4+ days without water
-- **Medium → Small**: After 6+ days without water
+- **Big → Medium**: After 8 days without water
+- **Medium → Small**: After 10 days without water
+- **Small**: Stays small
 
 #### Other Effects:
 
-- **Water streak reset**: After 2+ days without water
+- **Water streak reset**: After 3 days without water
 - **Days without water counter**: Increments daily for non-watered plants
-
-## API Endpoints
-
-### Get Watering Stats
-
-```
-GET /api/garden/watering/stats
-```
-
-Returns current watering statistics and plants needing water.
-
-### Update Daily Limit
-
-```
-PUT /api/garden/watering/limit
-Body: {"new_limit": 4}
-```
-
-Updates the daily watering limit (1-50 plants).
-
-### Water Plants from Analysis
-
-```
-POST /api/garden/water
-```
-
-Analyzes checklist image and waters checked plants.
-
-## Database Schema Changes
-
-### New Columns in `plants` table:
-
-- `growth_stage`: INTEGER (1-5 growth stages)
-- `last_watered`: DATE (last watering date)
-- `days_without_water`: INTEGER (days since last watering)
-- `water_streak`: INTEGER (consecutive watering days)
-- `total_water_count`: INTEGER (lifetime watering count)
-
-### New Tables:
-
-- `watering_history`: Tracks daily watering events
-- `daily_watering_config`: Stores daily limits
-
-## Migration
-
-The system includes a migration script (`migrate_watering_system.py`) that:
-
-1. Adds missing columns to existing plants
-2. Creates new watering tables
-3. Sets daily limit to 4 plants
-4. Creates necessary indexes
+- **Priority system**: Plants needing water are those with "okay"/"dead" health or 3+ days without water
 
 ## Examples
 
-### Healthy Plant Care
+### Simplified Plant Care Journey
+
+**New Plant (starting as "okay"):**
 
 ```
-Day 1: Water → Health: okay, Size: small, Streak: 1
-Day 2: Water → Health: okay, Size: small, Streak: 2
-Day 3: Water → Health: okay, Size: small, Streak: 3
-Day 4: Water → Health: okay, Size: medium, Streak: 4
-Day 5: Water → Health: okay, Size: medium, Streak: 5
-Day 6: Water → Health: okay, Size: medium, Streak: 6
-Day 7: Water → Health: healthy, Size: big, Streak: 7
+Day 1: Water → Health: okay, Size: small, Streak: 1, Growth: 1
+Day 2: Water → Health: okay, Size: small, Streak: 2, Growth: 1
+Day 3: Water → Health: healthy, Size: small, Streak: 3, Growth: 1
+Day 4: Water → Health: healthy, Size: small, Streak: 4, Growth: 1
+Day 5: Water → Health: healthy, Size: medium, Streak: 5, Growth: 2
 ```
 
-### Plant Recovery from Dead
+**Plant Recovery from Dead:**
 
 ```
-Dead plant + 5 consecutive days watering → Okay
-Okay plant + 7 consecutive days watering → Healthy
+Dead plant + 3 consecutive days watering → Okay
+Dead plant + 5 consecutive days watering → Healthy
+Okay plant + 3 consecutive days watering → Healthy
+```
+
+**Plant Neglect Timeline:**
+
+```
+Healthy plant:
+- Days 1-5: Stays healthy
+- Day 6: Becomes okay
+- Day 10: Becomes dead (if "okay" for 4 days)
+
+Size decline:
+- Big plant: Becomes medium after 8 days
+- Medium plant: Becomes small after 10 days
 ```
 
 ### Daily Limit Example

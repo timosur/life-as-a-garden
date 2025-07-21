@@ -9,10 +9,10 @@
 
 ## Download latest garden to file and analyze the png for checked plants
 
-1. Run `docker run -v $HOME/.config/rmapi/:/home/app/.config/rmapi/ -v $HOME/rmapi:/tmp/rmapi/ rmapi geta Lebensgarten/Lebensgarten` to download latest Lebensgarten to zip fiel located in $HOME/rmapi
-2. Run `cd ~/code/life-as-a-garden/backend/input && mkdir Lebensgarten && cd Lebensgarten && unzip ~/rmapi/Lebensgarten.zip` to unzip
-3. Run `~/code/remarks/.venv/bin/python -m remarks ~/code/life-as-a-garden/backend/input/Lebensgarten ~/code/life-as-a-garden/backend/input` to convert the remarkable specific folder structure containing the data to PDF
-4. Run `magick -density 300 Lebensgarten\ _remarks.pdf -quality 100 Lebensgarten.png`
+1. Run `docker run -v $HOME/.config/rmapi/:/home/app/.config/rmapi/ -v $HOME/rmapi:/tmp/rmapi/ rmapi geta Lebensgarten/Lebensgarten` to download latest Lebensgarten to zip fiel located in $HOME/rmapi and ignore error, we only want the zip
+2. Run `cd ~/code/life-as-a-garden/backend/input && rm -rf * 2>/dev/null || true && unzip ~/rmapi/Lebensgarten.zip` to unzip
+3. Run `~/code/remarks/.venv/bin/python -m remarks ~/code/life-as-a-garden/backend/input ~/code/life-as-a-garden/backend/input` to convert the remarkable specific folder structure containing the data to PDF
+4. Run `magick -density 300 ~/code/life-as-a-garden/backend/input/Lebensgarten\ _remarks.pdf -quality 100 ~/code/life-as-a-garden/backend/input/Lebensgarten.png`
 5. Analyze Page one png (Lebensgarten-1.png) using LLM
    -> Prompt:
 
