@@ -17,9 +17,10 @@ services:
       - ./backend/.env
     volumes:
       # Mount volumes for persistent data
-      - ./backend/garden.db:/app/garden.db
       - ./backend/input:/app/input
       - ./backend/output:/app/output
+      # Mount database directory for persistence
+      - ./backend/db:/app/db
     restart: unless-stopped
     depends_on:
       - rmapi-wrapper
@@ -38,10 +39,8 @@ services:
     ports:
       - "8001:8001"
     volumes:
-      # Mount Docker socket to allow container to run Docker commands
-      - /var/run/docker.sock:/var/run/docker.sock
       # Mount rmapi config and data directories
-      - ~/.config/rmapi:/home/app/.config/rmapi
+      - ~/.config/rmapi:/root/.config/rmapi
       - ~/rmapi:/tmp/rmapi
       # Mount temporary upload directory
       - /tmp/rmapi-uploads:/tmp/rmapi-uploads

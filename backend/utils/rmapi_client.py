@@ -3,6 +3,7 @@ import os
 from datetime import datetime
 from pathlib import Path
 from typing import Optional
+from settings import settings
 
 
 class RmapiClient:
@@ -16,11 +17,9 @@ class RmapiClient:
 
         Args:
             base_url: Base URL of the rmapi-wrapper service.
-                     Defaults to RMAPI_SERVICE_URL environment variable or localhost.
+                     Defaults to RMAPI_SERVICE_URL environment variable or settings configuration.
         """
-        self.base_url = base_url or os.getenv(
-            "RMAPI_SERVICE_URL", "http://localhost:8001"
-        )
+        self.base_url = base_url or settings.rmapi_service_url
         self.timeout = 60  # 60 seconds timeout for operations
 
     def _make_request(self, method: str, endpoint: str, **kwargs) -> dict:

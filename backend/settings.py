@@ -6,6 +6,7 @@ class Settings(BaseSettings):
 
     openai_api_key: str
     frontend_url: str = "http://localhost:5173/"
+    rmapi_service_url: str = "http://localhost:8001"
 
     model_config = SettingsConfigDict(env_file=".env")
 

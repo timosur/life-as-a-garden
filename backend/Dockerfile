@@ -28,7 +28,7 @@ RUN playwright install chromium && \
 COPY . .
 
 # Create necessary directories
-RUN mkdir -p input output
+RUN mkdir -p input output db
 
 # Expose the port FastAPI will run on
 EXPOSE 8000

@@ -17,7 +17,7 @@ class WateringLimitUpdate(BaseModel):
 app = FastAPI(title="Life as a Garden API", version="1.0.0")
 
 # Initialize the database
-garden_db = GardenDatabase("garden.db")
+garden_db = GardenDatabase("db/garden.db")
 
 openai.api_key = settings.openai_api_key
 
