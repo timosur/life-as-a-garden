@@ -1,5 +1,6 @@
 import requests
 import os
+import base64
 from datetime import datetime
 from pathlib import Path
 from typing import Optional
@@ -57,13 +58,45 @@ class RmapiClient:
             local_path: Optional local path to save file
 
         Returns:
-            dict: Operation result
+            dict: Operation result with file content and local file path
         """
         data = {"remote_path": remote_path}
         if local_path:
             data["local_path"] = local_path
 
-        return self._make_request("POST", "/api/rmapi/geta", json=data)
+        try:
+            response = self._make_request("POST", "/api/rmapi/geta", json=data)
+
+            # If the response contains file content, save it locally
+            if response.get("success") and response.get("file_content"):
+                # Decode the base64 file content
+                file_content = base64.b64decode(response["file_content"])
+
+                # Determine local file path
+                if not local_path:
+                    # Use input folder in backend
+                    input_dir = Path(__file__).parent.parent / "input"
+                    input_dir.mkdir(exist_ok=True)
+
+                    filename = response.get("filename", "downloaded_file")
+                    local_path = str(input_dir / filename)
+
+                # Save file locally
+                with open(local_path, "wb") as f:
+                    f.write(file_content)
+
+                # Add local file path to response
+                response["local_file_path"] = local_path
+                response["file_saved"] = True
+
+            return response
+
+        except Exception as e:
+            return {
+                "success": False,
+                "error": f"Failed to download file: {str(e)}",
+                "file_saved": False,
+            }
 
     def mv(self, source_path: str, destination_path: str) -> dict:
         """
@@ -93,11 +126,19 @@ class RmapiClient:
         if not os.path.exists(file_path):
             raise FileNotFoundError(f"File not found: {file_path}")
 
+        # Read file content and encode as base64
         with open(file_path, "rb") as f:
-            files = {"file": (Path(file_path).name, f, "application/octet-stream")}
-            data = {"destination_path": destination_path}
+            file_content = f.read()
+            file_content_b64 = base64.b64encode(file_content).decode("utf-8")
 
-            return self._make_request("POST", "/api/rmapi/put", files=files, data=data)
+        # Prepare request body with base64 encoded file content
+        data = {
+            "file_content": file_content_b64,
+            "filename": Path(file_path).name,
+            "destination_path": destination_path,
+        }
+
+        return self._make_request("POST", "/api/rmapi/put", json=data)
 
     def ls(self, path: str = "/") -> dict:
         """

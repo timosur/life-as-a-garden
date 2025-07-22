@@ -1,0 +1,4 @@
+- Use python3 (instead of python), Use docker compose (instead of python3).
+- Only test the implementation if I ask for it.
+- Only document changes if I ask for it.
+- Keep your explanation of what you are doing clean and short.

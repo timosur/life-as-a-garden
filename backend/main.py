@@ -2,16 +2,22 @@ import openai
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
+from typing import Optional
 
 from database import GardenDatabase
 from utils.image_analysis import analyze_checklist_image
 from utils.pdf_generator import print_garden_to_pdf_sync as print_garden_to_pdf
-from utils.rmapi_client import archive_and_upload_remarkable
+from utils.rmapi_client import archive_and_upload_remarkable, RmapiClient
 from settings import settings
 
 
 class WateringLimitUpdate(BaseModel):
     new_limit: int
+
+
+class DownloadRequest(BaseModel):
+    remote_path: str
+    local_path: Optional[str] = None
 
 
 app = FastAPI(title="Life as a Garden API", version="1.0.0")
@@ -231,6 +237,29 @@ def water_single_plant(plant_identifier: str, by_id: bool = False):
 
     except Exception as e:
         return {"success": False, "error": f"Failed to water plant: {str(e)}"}
+
+
+@app.post("/api/rmapi/download")
+def download_file(request: DownloadRequest):
+    """
+    Download a file from reMarkable device and save it locally.
+
+    Args:
+        request: DownloadRequest containing remote_path and optional local_path
+
+    Returns:
+        dict: Operation result with file content and local file path
+    """
+    try:
+        client = RmapiClient()
+        result = client.geta(request.remote_path, request.local_path)
+        return result
+    except Exception as e:
+        return {
+            "success": False,
+            "error": f"Failed to download file: {str(e)}",
+            "file_saved": False,
+        }
 
 
 @app.get("/health")
