@@ -40,8 +40,8 @@ services:
       - "8001:8001"
     volumes:
       # Mount rmapi config and data directories
-      - ~/.config/rmapi:/root/.config/rmapi
-      - ~/rmapi:/tmp/rmapi
+      - /root/.config/rmapi:/root/.config/rmapi
+      - /root/rmapi:/tmp/rmapi
       # Mount temporary upload directory
       - /tmp/rmapi-uploads:/tmp/rmapi-uploads
     restart: unless-stopped
