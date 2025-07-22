@@ -502,7 +502,7 @@ const getArealCoordinatesWithSize = (horizontalPos: 'left' | 'right', verticalPo
 };
 
 // API-Service für echte REST API
-const API_BASE_URL = 'http://localhost:8000';
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000';
 
 const GardenApiService = {
   async getGardenData(): Promise<GardenData | null> {
