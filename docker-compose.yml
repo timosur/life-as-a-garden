@@ -80,7 +80,8 @@ services:
     entrypoint: >
       sh -c "
       echo 'Installing supercronic...'
-      && wget -q https://github.com/aptible/supercronic/releases/download/v0.2.30/supercronic-linux-amd64 -O /tmp/supercronic
+      && curl -fsSL https://github.com/aptible/supercronic/releases/download/v0.2.30/supercronic-linux-arm64 -o /tmp/supercronic
+      && if [ ! -s /tmp/supercronic ]; then echo 'Download failed'; exit 1; fi
       && chmod +x /tmp/supercronic
       && echo '0 1 * * * curl -X POST http://backend:8000/api/garden/water' > /tmp/crontab
       && echo 'Starting scheduler...'
