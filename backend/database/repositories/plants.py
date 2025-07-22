@@ -19,8 +19,9 @@ class PlantRepository:
                 conn.execute(
                     """
                     INSERT INTO plants 
-                    (areal_id, name, health, image_path, size, position)
-                    VALUES (?, ?, ?, ?, ?, ?)
+                    (areal_id, name, health, image_path, size, position, 
+                     days_without_water, water_streak, total_water_count, growth_stage, last_watered)
+                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                 """,
                     (
                         areal_id,
@@ -29,6 +30,11 @@ class PlantRepository:
                         plant_data["imagePath"],
                         plant_data["size"],
                         plant_data["position"],
+                        plant_data.get("days_without_water", 0),
+                        plant_data.get("water_streak", 1),
+                        plant_data.get("total_water_count", 20),
+                        plant_data.get("growth_stage", 5),
+                        plant_data.get("last_watered", None),
                     ),
                 )
                 return True
