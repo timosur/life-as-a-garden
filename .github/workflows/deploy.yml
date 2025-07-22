@@ -1,0 +1,73 @@
+name: Deploy Life as a Garden
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+  workflow_dispatch:  # Allow manual triggering
+
+jobs:
+  deploy:
+    runs-on: self-hosted
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Create environment file
+      run: |
+        # Create backend .env file from secrets
+        mkdir -p backend
+        cat > backend/.env << EOF
+        OPENAI_API_KEY=${{ secrets.OPENAI_API_KEY }}
+        EOF
+      
+    - name: Stop existing containers
+      run: |
+        docker-compose down || true
+        
+    - name: Remove old images
+      run: |
+        docker system prune -f
+        
+    - name: Build and start services
+      run: |
+        docker-compose up -d --build
+        
+    - name: Wait for services to be healthy
+      run: |
+        echo "Waiting for services to start..."
+        sleep 30
+        
+        # Check if services are running
+        docker-compose ps
+        
+        # Wait for health checks
+        timeout 300 bash -c '
+          while ! docker-compose ps | grep -E "(healthy|running)"; do
+            echo "Waiting for services to be healthy..."
+            sleep 10
+          done
+        '
+        
+    - name: Verify deployment
+      run: |
+        # Test backend health
+        curl -f http://localhost:8000/docs || echo "Backend health check failed"
+        
+        # Test frontend
+        curl -f http://localhost:5173 || echo "Frontend health check failed"
+        
+        # Test rmapi-wrapper
+        curl -f http://localhost:8001/api/rmapi/health || echo "RMAPI wrapper health check failed"
+        
+    - name: Show container logs on failure
+      if: failure()
+      run: |
+        echo "=== Backend logs ==="
+        docker-compose logs backend
+        echo "=== Frontend logs ==="
+        docker-compose logs frontend
+        echo "=== RMAPI wrapper logs ==="
+        docker-compose logs rmapi-wrapper
