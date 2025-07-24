@@ -1,6 +1,5 @@
 #!/bin/bash
 
-# init-letsencrypt.sh
 # This script initializes Let's Encrypt certificates for the domain
 
 set -e
