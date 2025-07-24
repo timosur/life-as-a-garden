@@ -1,0 +1,79 @@
+// Color Palette
+$color-primary: #2d5a3d;
+$color-primary-light: rgba(0, 150, 0, 0.2);
+$color-primary-bg: rgba(0, 150, 0, 0.1);
+$color-primary-bg-light: rgba(0, 150, 0, 0.02);
+
+$color-success: #28a745;
+$color-success-bg: rgba(40, 167, 69, 0.1);
+
+$color-warning: #ffc107;
+$color-warning-bg: rgba(255, 193, 7, 0.1);
+
+$color-danger: #dc3545;
+$color-danger-bg: rgba(220, 53, 69, 0.1);
+
+$color-info: #17a2b8;
+$color-info-bg: rgba(23, 162, 184, 0.1);
+
+$color-blue: #007bff;
+$color-blue-bg: rgba(0, 123, 255, 0.1);
+$color-blue-row: rgba(0, 123, 255, 0.05);
+$color-blue-row-even: rgba(0, 123, 255, 0.08);
+
+// Text Colors
+$color-text-primary: #333;
+$color-text-secondary: #6c757d;
+$color-text-muted: #666;
+$color-text-light: #495057;
+
+// Background Colors
+$color-bg-white: rgba(255, 255, 255, 0.95);
+$color-bg-light: rgba(245, 245, 245, 0.8);
+$color-bg-green-light: rgba(240, 255, 240, 0.3);
+$color-bg-border: rgba(0, 0, 0, 0.05);
+
+// Border & Shadow
+$border-radius-small: 4px;
+$border-radius-medium: 8px;
+$border-radius-large: 12px;
+
+$box-shadow-default: 0 4px 12px rgba(0, 0, 0, 0.1);
+
+// Spacing
+$padding-small: 6px;
+$padding-medium: 12px;
+$padding-large: 16px;
+$padding-xl: 20px;
+$padding-xxl: 24px;
+
+$margin-small: 4px;
+$margin-medium: 8px;
+$margin-large: 12px;
+$margin-xl: 16px;
+$margin-xxl: 20px;
+
+// Typography
+$font-family-monospace: 'Courier New', monospace;
+$font-family-system: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+
+$font-size-xs: 8px;
+$font-size-small: 9px;
+$font-size-medium: 10px;
+$font-size-regular: 14px;
+$font-size-large: 15px;
+$font-size-xl: 16px;
+$font-size-icon: 48px;
+
+$font-weight-normal: 400;
+$font-weight-medium: 500;
+$font-weight-semibold: 600;
+
+// Breakpoints
+$breakpoint-mobile: 768px;
+
+// Scrollbar
+$scrollbar-width: 6px;
+$scrollbar-track: rgba(0, 0, 0, 0.05);
+$scrollbar-thumb: rgba(0, 150, 0, 0.3);
+$scrollbar-thumb-hover: rgba(0, 150, 0, 0.5);

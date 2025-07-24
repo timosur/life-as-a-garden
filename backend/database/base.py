@@ -29,20 +29,27 @@ class DatabaseConnection:
         return self._create_connection()
 
     def init_database(self):
-        """Initialize the database with the schema."""
-        schema_path = Path(__file__).parent / "schema.sql"
+        """
+        Initialize the database connection.
 
+        Note: Table creation is now handled by Alembic migrations.
+        This method is kept for backward compatibility.
+        """
+        # For in-memory databases used in tests, create basic schema
+        if self.db_path == ":memory:":
+            self._create_tables_for_testing()
+
+    def _create_tables_for_testing(self):
+        """Create tables for in-memory testing databases."""
+        schema_path = Path(__file__).parent / "schema.sql"
         conn = self.get_connection()
+
         if schema_path.exists():
             with open(schema_path, "r") as f:
                 schema_sql = f.read()
             conn.executescript(schema_sql)
         else:
             self._create_tables_fallback(conn)
-
-        # Don't close the connection for in-memory databases
-        if not self._shared_connection:
-            conn.close()
 
     def _create_tables_fallback(self, conn: sqlite3.Connection):
         """Fallback method to create tables if schema.sql is not found."""

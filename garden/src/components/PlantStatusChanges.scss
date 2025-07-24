@@ -1,0 +1,248 @@
+@use '../styles/variables' as *;
+@use '../styles/mixins' as *;
+
+.plant-status-changes {
+  background: $color-bg-white;
+  border-radius: $border-radius-large;
+  padding: $padding-large;
+  box-shadow: $box-shadow-default;
+  border: 1px solid $color-primary-light;
+  overflow-y: auto;
+  @include custom-scrollbar;
+
+  h3 {
+    margin: 0 0 $margin-large 0;
+    color: $color-primary;
+    font-size: $font-size-xl;
+    font-weight: $font-weight-semibold;
+  }
+
+  // States
+  &.loading,
+  &.error,
+  &.empty {
+    text-align: center;
+    padding: $padding-xxl $padding-large;
+  }
+
+  &.error h3 {
+    color: $color-danger;
+  }
+
+  &.empty p {
+    margin: $margin-medium 0 0 0;
+    color: $color-text-secondary;
+    font-style: italic;
+  }
+}
+
+// Empty State
+.empty-state {
+  text-align: center;
+  padding: $padding-xxl;
+
+  .empty-icon {
+    font-size: $font-size-icon;
+    margin-bottom: $margin-xl;
+  }
+
+  .empty-details {
+    margin-top: $padding-xxl;
+    text-align: left;
+    background: $color-bg-green-light;
+    padding: $padding-large;
+    border-radius: $border-radius-medium;
+    border: 1px solid $color-primary-light;
+
+    p {
+      margin: 0 0 $margin-medium 0;
+      font-weight: $font-weight-medium;
+      color: $color-primary;
+    }
+
+    ul {
+      margin: $margin-medium 0 $margin-xl 0;
+      padding-left: $padding-xxl;
+    }
+
+    li {
+      margin: $margin-small 0;
+      color: $color-text-light;
+    }
+
+    .timestamp {
+      color: $color-text-secondary;
+      font-style: italic;
+      margin-top: $margin-large;
+      text-align: center;
+      border-top: 1px solid $color-primary-bg;
+      padding-top: $margin-medium;
+    }
+  }
+}
+
+// Summary Section
+.summary-section-compact {
+  font-size: $font-size-large;
+  margin-bottom: $margin-xl;
+  padding: $margin-large;
+  background: $color-bg-light;
+  border-radius: $border-radius-small;
+
+  .summary-line {
+    font-size: $font-size-regular;
+    color: $color-text-primary;
+    font-family: $font-family-system;
+
+    strong {
+      color: $color-primary;
+    }
+  }
+}
+
+// Table Styles
+.changes-table-container {
+  overflow-x: auto;
+  border-radius: $border-radius-medium;
+  border: 1px solid $color-primary-light;
+
+  .changes-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: $font-size-large;
+    background: white;
+
+    th {
+      @include table-header;
+    }
+
+    td {
+      @include table-cell-base;
+    }
+
+    .change-row {
+      &:nth-child(even) {
+        background: $color-primary-bg-light;
+      }
+
+      &.watered {
+        background: $color-blue-row;
+
+        &:nth-child(even) {
+          background: $color-blue-row-even;
+        }
+      }
+    }
+  }
+}
+
+// Cell-specific Styles
+.time-cell {
+  font-family: $font-family-monospace;
+  color: $color-text-muted;
+  font-weight: $font-weight-medium;
+  min-width: 45px;
+  white-space: nowrap;
+}
+
+.plant-cell {
+  font-weight: $font-weight-semibold;
+  color: $color-primary;
+  min-width: 80px;
+}
+
+.stat-change {
+  @include flex-column(2px);
+
+  .stat-values {
+    font-family: $font-family-monospace;
+    color: $color-text-primary;
+    white-space: nowrap;
+  }
+}
+
+// Status Indicators
+.change-indicator {
+  @include status-indicator($color-bg-light, $color-text-primary);
+
+  // Health specific
+  &.health-healthy {
+    @include status-indicator($color-success-bg, $color-success);
+  }
+
+  &.health-okay {
+    @include status-indicator($color-warning-bg, $color-warning);
+  }
+
+  &.health-dead {
+    @include status-indicator($color-danger-bg, $color-danger);
+  }
+
+  // Growth indicators
+  &.growth-up {
+    @include status-indicator($color-success-bg, $color-success);
+  }
+
+  // Water streak indicators
+  &.streak-up {
+    @include status-indicator($color-blue-bg, $color-blue);
+  }
+
+  &.streak-down {
+    @include status-indicator($color-warning-bg, $color-warning);
+  }
+
+  // Thirst quenched
+  &.thirst-quenched {
+    @include status-indicator($color-info-bg, $color-info);
+  }
+}
+
+// Checkbox Styling
+.checkbox-container {
+  text-align: center;
+
+  .checkbox {
+    font-size: $font-size-regular;
+
+    &.checked {
+      color: $color-success;
+    }
+  }
+}
+
+// Responsive Design
+@include mobile {
+  .changes-table {
+    font-size: $font-size-medium;
+
+    th,
+    td {
+      padding: $margin-small 3px;
+    }
+  }
+
+  .stat-values {
+    font-size: $font-size-small;
+  }
+
+  .change-indicator {
+    font-size: $font-size-xs;
+  }
+}
+
+// Print Optimizations
+@include print {
+  .changes-table {
+    font-size: $font-size-small;
+
+    th,
+    td {
+      padding: 2px 3px;
+    }
+  }
+
+  .change-row {
+    break-inside: avoid;
+  }
+}

@@ -9,6 +9,7 @@ from typing import List, Dict, Any
 from .base import DatabaseConnection
 from .services import GardenService
 from .utils import DataSeeder
+from .migrate import run_migrations_on_startup
 
 
 class GardenDatabase:
@@ -28,8 +29,13 @@ class GardenDatabase:
         self.init_database()
 
     def init_database(self):
-        """Initialize the database with the schema and seed initial data."""
-        self.db_connection.init_database()
+        """Initialize the database with migrations and seed initial data."""
+        # Run migrations first
+        migration_success = run_migrations_on_startup(self.db_path)
+
+        if not migration_success:
+            raise RuntimeError("Failed to run database migrations")
+
         # Seed initial data if database is empty
         self.data_seeder.seed_initial_data()
 
@@ -110,6 +116,24 @@ class GardenDatabase:
     def set_daily_watering_limit(self, new_limit: int) -> bool:
         """Update the daily watering limit."""
         return self.garden_service.set_daily_watering_limit(new_limit)
+
+    def get_last_watering_details(self) -> Dict[str, Any]:
+        """Get detailed information about the last watering session."""
+        return self.garden_service.get_last_watering_details()
+
+    def update_daily_plant_status(self, current_date: str = None) -> Dict[str, Any]:
+        """Update status of all plants for daily maintenance with status change tracking."""
+        return self.garden_service.update_daily_plant_status(current_date)
+
+    def get_plant_status_changes(
+        self, plant_id: int = None, limit: int = None
+    ) -> List[Dict[str, Any]]:
+        """Get plant status changes history."""
+        return self.garden_service.get_plant_status_changes(plant_id, limit)
+
+    def get_todays_plant_status_changes(self) -> List[Dict[str, Any]]:
+        """Get plant status changes for today only."""
+        return self.garden_service.get_todays_plant_status_changes()
 
     def migrate_daily_limit_to_4(self) -> bool:
         """Migrate existing database to set daily limit to 4 plants."""

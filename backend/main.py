@@ -194,6 +194,63 @@ def get_watering_stats():
     }
 
 
+@app.get("/api/garden/watering/last-session")
+def get_last_watering_session():
+    """Get detailed information about the last watering session including plant changes"""
+    try:
+        result = garden_db.get_last_watering_details()
+        return result
+    except Exception as e:
+        return {
+            "success": False,
+            "error": f"Failed to get last watering details: {str(e)}",
+        }
+
+
+@app.get("/api/garden/plant-status-changes")
+def get_plant_status_changes(plant_id: int = None, limit: int = None):
+    """Get history of plant status changes"""
+    try:
+        result = garden_db.get_plant_status_changes(plant_id, limit)
+        return {"success": True, "status_changes": result}
+    except Exception as e:
+        return {"success": False, "error": f"Failed to get status changes: {str(e)}"}
+
+
+@app.get("/api/garden/plant-status-changes/today")
+def get_todays_plant_status_changes():
+    """Get plant status changes for today only"""
+    try:
+        from datetime import date
+
+        today = date.today().strftime("%Y-%m-%d")
+
+        # Get today's changes directly from repository with SQL filtering
+        todays_changes = garden_db.get_todays_plant_status_changes()
+
+        return {
+            "success": True,
+            "status_changes": todays_changes,
+            "date": today,
+            "count": len(todays_changes),
+        }
+    except Exception as e:
+        return {
+            "success": False,
+            "error": f"Failed to get today's status changes: {str(e)}",
+        }
+
+
+@app.post("/api/garden/update-daily-status")
+def update_daily_plant_status():
+    """Update status of all plants for daily maintenance (manually trigger)"""
+    try:
+        result = garden_db.update_daily_plant_status()
+        return result
+    except Exception as e:
+        return {"success": False, "error": f"Failed to update daily status: {str(e)}"}
+
+
 @app.put("/api/garden/watering/limit")
 def update_watering_limit(request: WateringLimitUpdate):
     """Update the daily watering limit"""

@@ -44,3 +44,28 @@ export interface HealthTint {
   b: number;
   alpha: number;
 }
+
+export interface PlantStatusChange {
+  id: number;
+  plant_id: number;
+  plant_name: string;
+  change_date: string;
+  change_type: "watered" | "daily_update";
+  old_health: string;
+  new_health: string;
+  old_growth_stage: number;
+  new_growth_stage: number;
+  old_water_streak: number;
+  new_water_streak: number;
+  old_days_without_water: number;
+  new_days_without_water: number;
+  old_total_water_count: number;
+  new_total_water_count: number;
+  created_at: string;
+}
+
+export interface PlantStatusChangesResponse {
+  success: boolean;
+  status_changes: PlantStatusChange[];
+  error?: string;
+}

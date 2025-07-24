@@ -158,13 +158,15 @@ class PlantRepository:
         """
         Update plants that weren't watered today with simplified logic.
 
-        Simplified Watering Timeline:
-        - Healthy plants: Stay healthy for 5 days, become "okay" after 6 days
-        - Okay plants: Become "dead" after 4 days without water
-        - Dead plants: Stay dead
-        - Water streak: Reset after 3 days without water
-        - Size reduction: Big→Medium after 8 days, Medium→Small after 10 days
+        NOTE: This method is deprecated. Use WateringService.update_daily_plant_status() instead
+        for centralized business logic and status change tracking.
         """
+        # This method is kept for backward compatibility but should be replaced
+        # by the service layer method that includes status change tracking
+        print(
+            "WARNING: Using deprecated update_non_watered_plants. Use WateringService.update_daily_plant_status() instead."
+        )
+
         try:
             with self.db.get_connection() as conn:
                 # Get plants not watered today

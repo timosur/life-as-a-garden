@@ -1,0 +1,211 @@
+@use '../styles/variables' as *;
+@use '../styles/mixins' as *;
+
+/* PDF Layout Styles */
+.pdf-layout {
+  background: white;
+  font-family: 'Arial', sans-serif;
+  width: 100%;
+  max-width: none; /* Override any parent max-width constraints */
+
+  /* Override root constraints for PDF layout */
+  width: 100% !important;
+  max-width: none !important;
+  margin: 0 !important;
+}
+
+.pdf-page {
+  padding: 0;
+  background: white;
+  page-break-after: always;
+  min-height: 100vh;
+  box-sizing: border-box;
+
+  &:last-child {
+    margin-bottom: 0;
+  }
+}
+
+.page-header {
+  text-align: center;
+  margin-bottom: 30px;
+  border-bottom: 2px solid $color-primary;
+  padding-bottom: 15px;
+
+  h1 {
+    margin: 0 0 10px 0;
+    color: $color-primary;
+    font-size: 28px;
+    font-weight: bold;
+  }
+
+  p {
+    margin: 0;
+    color: $color-text-muted;
+    font-size: $font-size-xl;
+  }
+}
+
+/* Page-specific styles */
+.page-checklist {
+  @include flex-column;
+  align-items: center;
+}
+
+.page-garden {
+  @include flex-column;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+}
+
+.page-status-changes {
+  @include flex-column;
+  padding: $padding-xl;
+}
+
+/* Full page status changes */
+.full-page-status {
+  flex: 1;
+  max-height: none !important;
+  box-shadow: none !important;
+  border: none !important;
+  background: transparent !important;
+  padding: 0 !important;
+
+  h3 {
+    display: none; /* Header already shown in page header */
+  }
+
+  .changes-list {
+    gap: $padding-xl;
+  }
+
+  .plant-changes {
+    background: rgba(240, 255, 240, 0.5);
+    border: 1px solid $color-primary-light;
+    border-radius: $border-radius-medium;
+    padding: 15px;
+    margin-bottom: 15px;
+  }
+
+  .plant-name {
+    font-size: 18px;
+    color: $color-primary;
+    margin-bottom: $padding-medium;
+    font-weight: bold;
+  }
+
+  .change-item {
+    margin-bottom: $padding-medium;
+    padding: 10px;
+    border-radius: $border-radius-small;
+    background: $color-bg-white;
+    border-left: 4px solid $color-success;
+  }
+
+  .change-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: $margin-small;
+  }
+
+  .change-icon {
+    font-size: 18px;
+  }
+
+  .change-type {
+    font-size: $font-size-regular;
+    font-weight: $font-weight-semibold;
+    color: $color-text-light;
+    background: rgba(0, 0, 0, 0.1);
+    padding: 4px 8px;
+    border-radius: $border-radius-large;
+  }
+
+  .change-time {
+    font-size: $font-size-medium;
+    color: $color-text-secondary;
+    margin-left: auto;
+  }
+
+  .change-description {
+    font-size: $font-size-regular;
+    color: $color-text-light;
+    line-height: 1.5;
+  }
+}
+
+/* Canvas container adjustments for PDF */
+.pdf-page canvas {
+  height: auto;
+  display: block;
+}
+
+/* Ensure garden page has proper canvas display */
+.page-garden canvas {
+  width: 1100px !important;
+  height: 1400px !important;
+  margin: 0 !important;
+  border: none !important;
+  border-radius: 0 !important;
+  box-shadow: none !important;
+}
+
+/* Print-specific styles */
+@media print {
+  body {
+    margin: 0;
+    padding: 0;
+  }
+  
+  .pdf-page {
+    width: 100%;
+    min-height: 100vh;
+    margin: 0;
+    box-shadow: none;
+    page-break-after: always;
+
+    &:last-child {
+      page-break-after: avoid;
+    }
+  }
+  
+  .page-header {
+    margin-bottom: $padding-xl;
+
+    h1 {
+      font-size: 24px;
+    }
+
+    p {
+      font-size: $font-size-regular;
+    }
+  }
+  
+  /* Full page garden canvas for print */
+  .page-garden {
+    padding: 0 !important;
+
+    canvas {
+      width: 100% !important;
+      height: 100% !important;
+      border: none !important;
+      margin: 0 !important;
+    }
+  }
+}
+
+/* Screen display adjustments */
+@media screen {
+  .pdf-layout {
+    max-width: 1200px;
+    margin: 0 auto;
+  }
+  
+  .pdf-page {
+    margin-bottom: 30px;
+    border-radius: $border-radius-medium;
+  }
+}

@@ -2,3 +2,4 @@ fastapi[all]
 playwright
 openai
 requests
+alembic

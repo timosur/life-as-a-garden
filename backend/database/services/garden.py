@@ -134,6 +134,24 @@ class GardenService:
             plant_identifier, watering_date, by_id
         )
 
+    def get_last_watering_details(self) -> Dict[str, Any]:
+        """Get detailed information about the last watering session."""
+        return self.watering_service.get_last_watering_details()
+
+    def update_daily_plant_status(self, current_date: str = None) -> Dict[str, Any]:
+        """Update status of all plants for daily maintenance with status change tracking."""
+        return self.watering_service.update_daily_plant_status(current_date)
+
+    def get_plant_status_changes(
+        self, plant_id: int = None, limit: int = None
+    ) -> List[Dict[str, Any]]:
+        """Get plant status changes history."""
+        return self.watering_repo.get_plant_status_changes(plant_id, limit)
+
+    def get_todays_plant_status_changes(self) -> List[Dict[str, Any]]:
+        """Get plant status changes for today only."""
+        return self.watering_service.get_todays_plant_status_changes()
+
     def migrate_daily_limit_to_4(self) -> bool:
         """Migrate existing database to set daily limit to 4 plants."""
         return self.watering_repo.migrate_daily_limit_to_4()

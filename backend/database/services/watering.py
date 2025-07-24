@@ -79,7 +79,8 @@ class WateringService:
                     )
 
             # Update plants that weren't watered (increase days_without_water)
-            self.plant_repo.update_non_watered_plants(watering_date)
+            # Use the new centralized method with status change tracking
+            self.update_daily_plant_status(watering_date)
 
             return {
                 "success": True,
@@ -165,7 +166,7 @@ class WateringService:
             )
 
             # Update plants that weren't watered (increase days_without_water)
-            self.plant_repo.update_non_watered_plants(watering_date)
+            self.update_daily_plant_status(watering_date)
 
             return {
                 "success": True,
@@ -182,6 +183,14 @@ class WateringService:
         except Exception as e:
             return {"success": False, "error": f"Unexpected error: {str(e)}"}
 
+    def get_last_watering_details(self) -> Dict[str, Any]:
+        """Get detailed information about the last watering session."""
+        return self.watering_repo.get_last_watering_details()
+
+    def get_todays_plant_status_changes(self) -> List[Dict[str, Any]]:
+        """Get plant status changes for today only."""
+        return self.watering_repo.get_todays_plant_status_changes()
+
     def _calculate_plant_status_after_watering(
         self, plant: Dict[str, Any], watering_date: str
     ) -> Dict[str, Any]:
@@ -194,6 +203,15 @@ class WateringService:
         - Healthy plants: Stay healthy with any watering
         - Growth is based on total water count and consistency
         """
+        # Store old state for change tracking
+        old_state = {
+            "health": plant["health"],
+            "growth_stage": plant["growth_stage"],
+            "water_streak": plant["water_streak"],
+            "total_water_count": plant["total_water_count"],
+            "days_without_water": plant["days_without_water"],
+        }
+
         # Calculate new water streak
         last_watered = plant["last_watered"]
         current_date = datetime.strptime(watering_date, "%Y-%m-%d").date()
@@ -268,6 +286,21 @@ class WateringService:
             else:
                 new_size = "small"
 
+        # Create new state for change tracking
+        new_state = {
+            "health": new_health,
+            "growth_stage": new_growth_stage,
+            "water_streak": new_streak,
+            "total_water_count": new_total_count,
+            "days_without_water": 0,
+        }
+
+        # Record status change if there's any difference
+        if self._has_state_changed(old_state, new_state):
+            self.watering_repo.record_plant_status_change(
+                plant["id"], watering_date, "watered", old_state, new_state
+            )
+
         # Update the plant in database
         self.plant_repo.update_plant_watering_stats(
             plant["id"],
@@ -288,3 +321,188 @@ class WateringService:
             "total_water_count": new_total_count,
             "days_without_water": 0,
         }
+
+    def update_daily_plant_status(self, current_date: str = None) -> Dict[str, Any]:
+        """
+        Update status of all plants for daily maintenance (plants not watered today).
+        This method centralizes the plant status calculation logic.
+        IMPORTANT: This method ensures it only runs once per day using a dedicated tracking table.
+        """
+        if current_date is None:
+            current_date = date.today().strftime("%Y-%m-%d")
+
+        try:
+            # Safety check: Ensure this method only runs once per day
+            if self.watering_repo.is_daily_update_completed(current_date):
+                existing_info = self.watering_repo.get_daily_update_info(current_date)
+                return {
+                    "success": False,
+                    "message": f"Daily plant status update already completed for {current_date}",
+                    "already_processed": True,
+                    "completed_at": existing_info["completed_at"]
+                    if existing_info
+                    else None,
+                    "plants_processed": existing_info["plants_processed"]
+                    if existing_info
+                    else 0,
+                    "plants_updated": existing_info["plants_updated"]
+                    if existing_info
+                    else 0,
+                    "updated_plants": [],
+                }
+
+            with self.db.get_connection() as conn:
+                # Get plants not watered today
+                plants_not_watered = conn.execute(
+                    """SELECT p.* FROM plants p 
+                       WHERE p.id NOT IN (
+                           SELECT wh.plant_id FROM watering_history wh 
+                           WHERE wh.watering_date = ?
+                       )""",
+                    (current_date,),
+                ).fetchall()
+
+                updated_plants = []
+                plants_with_changes = 0
+
+                for plant in plants_not_watered:
+                    # Store old state
+                    old_state = {
+                        "health": plant["health"],
+                        "growth_stage": plant["growth_stage"],
+                        "water_streak": plant["water_streak"],
+                        "total_water_count": plant["total_water_count"],
+                        "days_without_water": plant["days_without_water"],
+                    }
+
+                    # Calculate new state using centralized logic
+                    new_state = self._calculate_plant_status_without_watering(
+                        dict(plant)
+                    )
+
+                    # Record status change if there's any difference
+                    has_changes = self._has_state_changed(old_state, new_state)
+                    if has_changes:
+                        self.watering_repo.record_plant_status_change(
+                            plant["id"],
+                            current_date,
+                            "daily_update",
+                            old_state,
+                            new_state,
+                        )
+                        plants_with_changes += 1
+
+                    # Update plant in database
+                    self.plant_repo.update_plant_watering_stats(
+                        plant["id"],
+                        plant["last_watered"],  # Keep existing last_watered date
+                        new_state["days_without_water"],
+                        new_state["water_streak"],
+                        new_state["total_water_count"],
+                        new_state["growth_stage"],
+                        new_state["health"],
+                        new_state["size"],
+                    )
+
+                    updated_plants.append(
+                        {
+                            "id": plant["id"],
+                            "name": plant["name"],
+                            "old_state": old_state,
+                            "new_state": new_state,
+                            "has_changes": has_changes,
+                        }
+                    )
+
+                # Record that daily update has been completed
+                self.watering_repo.record_daily_update_completion(
+                    current_date, len(plants_not_watered), plants_with_changes
+                )
+
+                return {
+                    "success": True,
+                    "message": f"Daily update completed for {current_date}",
+                    "date_processed": current_date,
+                    "plants_processed": len(plants_not_watered),
+                    "plants_with_changes": plants_with_changes,
+                    "updated_plants": updated_plants,
+                }
+
+        except Exception as e:
+            print(f"Error updating daily plant status: {e}")
+            return {"success": False, "error": str(e)}
+
+    def is_daily_update_needed(self, current_date: str = None) -> bool:
+        """
+        Check if daily update is needed for the given date.
+
+        Returns:
+            bool: True if daily update is needed, False if already completed
+        """
+        if current_date is None:
+            current_date = date.today().strftime("%Y-%m-%d")
+
+        return not self.watering_repo.is_daily_update_completed(current_date)
+
+    def _calculate_plant_status_without_watering(
+        self, plant: Dict[str, Any]
+    ) -> Dict[str, Any]:
+        """
+        Calculate new plant status when not watered (centralized logic).
+
+        Simplified Watering Timeline:
+        - Healthy plants: Stay healthy for 5 days, become "okay" after 6 days
+        - Okay plants: Become "dead" after 4 days without water
+        - Dead plants: Stay dead
+        - Water streak: Reset after 3 days without water
+        - Size reduction: Big→Medium after 8 days, Medium→Small after 10 days
+        """
+        days_without_water = plant["days_without_water"] + 1
+        current_health = plant["health"]
+        current_size = plant["size"]
+
+        # Simplified health degradation logic
+        new_health = current_health
+        if current_health == "healthy":
+            # Healthy plants downgrade to okay after 6 days without water
+            if days_without_water >= 6:
+                new_health = "okay"
+        elif current_health == "okay":
+            # Okay plants become dead after 4 days without water
+            if days_without_water >= 4:
+                new_health = "dead"
+        # Dead plants stay dead
+
+        # Reset water streak after 3 days without water
+        new_streak = 0 if days_without_water >= 3 else plant["water_streak"]
+
+        # Simplified size reduction logic - only after extended periods
+        new_size = current_size
+        if current_size == "big" and days_without_water >= 8:
+            new_size = "medium"
+        elif current_size == "medium" and days_without_water >= 10:
+            new_size = "small"
+        # Small plants stay small
+
+        return {
+            "health": new_health,
+            "growth_stage": plant["growth_stage"],  # Growth stage doesn't decrease
+            "water_streak": new_streak,
+            "total_water_count": plant[
+                "total_water_count"
+            ],  # Total count doesn't decrease
+            "days_without_water": days_without_water,
+            "size": new_size,
+        }
+
+    def _has_state_changed(
+        self, old_state: Dict[str, Any], new_state: Dict[str, Any]
+    ) -> bool:
+        """Check if any relevant plant state has changed."""
+        return (
+            old_state["health"] != new_state["health"]
+            or old_state["growth_stage"] != new_state["growth_stage"]
+            or old_state["water_streak"] != new_state["water_streak"]
+            or old_state["days_without_water"] != new_state["days_without_water"]
+            or old_state["total_water_count"] != new_state["total_water_count"]
+        )
