@@ -206,6 +206,7 @@ class WateringService:
         # Store old state for change tracking
         old_state = {
             "health": plant["health"],
+            "size": plant["size"],
             "growth_stage": plant["growth_stage"],
             "water_streak": plant["water_streak"],
             "total_water_count": plant["total_water_count"],
@@ -289,6 +290,7 @@ class WateringService:
         # Create new state for change tracking
         new_state = {
             "health": new_health,
+            "size": new_size,
             "growth_stage": new_growth_stage,
             "water_streak": new_streak,
             "total_water_count": new_total_count,
@@ -369,6 +371,7 @@ class WateringService:
                     # Store old state
                     old_state = {
                         "health": plant["health"],
+                        "size": plant["size"],
                         "growth_stage": plant["growth_stage"],
                         "water_streak": plant["water_streak"],
                         "total_water_count": plant["total_water_count"],
@@ -501,6 +504,7 @@ class WateringService:
         """Check if any relevant plant state has changed."""
         return (
             old_state["health"] != new_state["health"]
+            or old_state["size"] != new_state["size"]
             or old_state["growth_stage"] != new_state["growth_stage"]
             or old_state["water_streak"] != new_state["water_streak"]
             or old_state["days_without_water"] != new_state["days_without_water"]

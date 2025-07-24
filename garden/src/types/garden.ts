@@ -53,6 +53,8 @@ export interface PlantStatusChange {
   change_type: "watered" | "daily_update";
   old_health: string;
   new_health: string;
+  old_size: string;
+  new_size: string;
   old_growth_stage: number;
   new_growth_stage: number;
   old_water_streak: number;

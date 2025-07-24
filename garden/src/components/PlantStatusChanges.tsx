@@ -45,6 +45,15 @@ export const PlantStatusChanges: React.FC<PlantStatusChangesProps> = ({ classNam
     }
   };
 
+  const translateSize = (size: string): string => {
+    switch (size) {
+      case 'small': return 'Klein';
+      case 'medium': return 'Mittel';
+      case 'big': return 'Groß';
+      default: return size;
+    }
+  };
+
   if (loading) {
     return (
       <div className={`plant-status-changes loading ${className || ''}`}>
@@ -82,6 +91,10 @@ export const PlantStatusChanges: React.FC<PlantStatusChangesProps> = ({ classNam
       return healthOrder[c.new_health as keyof typeof healthOrder] > healthOrder[c.old_health as keyof typeof healthOrder];
     }).length,
     growthIncrease: changes.filter(c => c.new_growth_stage > c.old_growth_stage).length,
+    sizeIncrease: changes.filter(c => {
+      const sizeOrder = { small: 0, medium: 1, big: 2 };
+      return sizeOrder[c.new_size as keyof typeof sizeOrder] > sizeOrder[c.old_size as keyof typeof sizeOrder];
+    }).length,
   };
 
   return (
@@ -89,7 +102,7 @@ export const PlantStatusChanges: React.FC<PlantStatusChangesProps> = ({ classNam
       {/* Compact Summary */}
       <div className="summary-section-compact">
         <div className="summary-line">
-          <strong>📊 Zusammenfassung:</strong> {summary.totalPlants} Pflanzen • {summary.watered} gegossen • {summary.healthImproved} verbessert • {summary.growthIncrease} gewachsen
+          <strong>📊 Zusammenfassung:</strong> {summary.totalPlants} Pflanzen • {summary.watered} gegossen • {summary.healthImproved} verbessert • {summary.growthIncrease} gewachsen • {summary.sizeIncrease} vergrößert
         </div>
       </div>
 
@@ -100,6 +113,7 @@ export const PlantStatusChanges: React.FC<PlantStatusChangesProps> = ({ classNam
               <th>Zeit</th>
               <th>Pflanze</th>
               <th>Gesundheit</th>
+              <th>Größe</th>
               <th>Wachstum</th>
               <th>Wasserserie</th>
               <th>Tage ohne Wasser</th>
@@ -126,7 +140,22 @@ export const PlantStatusChanges: React.FC<PlantStatusChangesProps> = ({ classNam
                       {change.old_health !== change.new_health && (
                         <span className={`change-indicator health-${change.new_health}`}>
                           {change.new_health === 'healthy' ? '😊↗️' :
-                            change.new_health === 'okay' ? '�→' : '�↘️'}
+                            change.new_health === 'okay' ? '🙂→' : '😞↘️'}
+                        </span>
+                      )}
+                    </div>
+                  </td>
+                  <td className="size-cell">
+                    <div className="stat-change">
+                      <span className="stat-values">
+                        {translateSize(change.old_size)} → {translateSize(change.new_size)}
+                      </span>
+                      {change.old_size !== change.new_size && (
+                        <span className={`change-indicator ${(change.new_size === 'big' && change.old_size !== 'big') ||
+                            (change.new_size === 'medium' && change.old_size === 'small') ? 'size-up' : 'size-down'
+                          }`}>
+                          {(change.new_size === 'big' && change.old_size !== 'big') ||
+                            (change.new_size === 'medium' && change.old_size === 'small') ? '📏↗️' : '📏↘️'}
                         </span>
                       )}
                     </div>
