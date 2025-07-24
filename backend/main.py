@@ -317,7 +317,7 @@ def water_single_plant(plant_identifier: str, by_id: bool = False):
         return {"success": False, "error": f"Failed to water plant: {str(e)}"}
 
 
-@app.get("/health")
+@app.get("/api/health")
 async def health_check():
     """
     Comprehensive health check for all system components.
