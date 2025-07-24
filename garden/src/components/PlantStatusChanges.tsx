@@ -67,17 +67,6 @@ export const PlantStatusChanges: React.FC<PlantStatusChangesProps> = ({ classNam
         <div className="empty-state">
           <div className="empty-icon">🌿</div>
           <p>Keine Änderungen heute gefunden.</p>
-          <div className="empty-details">
-            <p>Das bedeutet:</p>
-            <ul>
-              <li>✅ Alle Pflanzen sind stabil</li>
-              <li>🔄 Keine automatischen Updates erforderlich</li>
-              <li>💧 Möglicherweise keine Bewässerung heute</li>
-            </ul>
-            <div className="timestamp">
-              Letzter Check: {new Date().toLocaleString('de-DE')}
-            </div>
-          </div>
         </div>
       </div>
     );
