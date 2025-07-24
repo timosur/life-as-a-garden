@@ -15,7 +15,9 @@ services:
       - rmapi-wrapper
     restart: unless-stopped
     volumes:
-      # For production SSL certificates
+      # Override with production SSL config
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf
+      # SSL certificates
       - ./certbot/conf:/etc/letsencrypt
       - ./certbot/www:/var/www/certbot
     healthcheck:
@@ -39,7 +41,6 @@ services:
       context: ./backend
       dockerfile: Dockerfile
     container_name: garden-backend
-    # Port only exposed internally to nginx
     expose:
       - "8000"
     environment:
@@ -50,11 +51,8 @@ services:
     env_file:
       - ./backend/.env
     volumes:
-      # Mount volumes for persistent data
       - ./backend/input:/app/input
       - ./backend/output:/app/output
-      # Mount database directory for persistence - using host directory outside repo
-      # This ensures the database survives deployments and repository updates
       - /var/lib/garden/db:/app/db
     restart: unless-stopped
     depends_on:
@@ -71,14 +69,11 @@ services:
       context: ./rmapi-wrapper
       dockerfile: Dockerfile
     container_name: garden-rmapi-wrapper
-    # Port only exposed internally to nginx
     expose:
       - "8001"
     volumes:
-      # Mount rmapi config and data directories
       - /root/.config/rmapi:/root/.config/rmapi
       - /root/rmapi:/tmp/rmapi
-      # Mount temporary upload directory
       - /tmp/rmapi-uploads:/tmp/rmapi-uploads
     restart: unless-stopped
     healthcheck:
@@ -93,7 +88,6 @@ services:
       context: ./garden
       dockerfile: Dockerfile
     container_name: garden-frontend
-    # Port only exposed internally to nginx
     expose:
       - "80"
     depends_on:
@@ -113,7 +107,7 @@ services:
     depends_on:
       - backend
     environment:
-      - TZ=Europe/Berlin  # Set timezone to CET
+      - TZ=Europe/Berlin
     entrypoint: >
       sh -c "
       echo 'Installing supercronic...'

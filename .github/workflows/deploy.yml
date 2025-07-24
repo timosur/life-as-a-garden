@@ -32,7 +32,7 @@ jobs:
         # Create frontend .env file for production deployment
         mkdir -p garden
         cat > garden/.env << EOF
-        VITE_API_BASE_URL=http://46.62.135.150:8000
+        VITE_API_BASE_URL=https://garden.timosur.com/api
         EOF
       
     - name: Stop existing containers
@@ -42,6 +42,17 @@ jobs:
     - name: Remove old images
       run: |
         docker system prune -f
+        
+    - name: Initialize Let's Encrypt certificates (first time only)
+      run: |
+        # Check if certificates already exist
+        if [ ! -f "./certbot/conf/live/garden.timosur.com/fullchain.pem" ]; then
+          echo "SSL certificates not found. Initializing Let's Encrypt..."
+          chmod +x ./init-letsencrypt.sh
+          ./init-letsencrypt.sh
+        else
+          echo "SSL certificates already exist. Skipping initialization."
+        fi
         
     - name: Build and start services
       run: |

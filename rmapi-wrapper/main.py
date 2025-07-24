@@ -314,7 +314,7 @@ def validate_rmapi():
         }
 
 
-@app.get("/api/rmapi/health")
+@app.get("/health")
 def health_check():
     """
     Check if rmapi service is accessible and working.
