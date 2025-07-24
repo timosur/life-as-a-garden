@@ -10,17 +10,12 @@ data_path="/var/lib/garden/certbot"
 email="garden@timosur.com"
 staging=0 # Set to 1 if you're testing your setup to avoid hitting request limits
 
-# For automated deployments, don't prompt for confirmation
-if [ -d "$data_path" ] && [ -z "$CI" ]; then
-  read -p "Existing data found for $domains. Continue and replace existing certificate? (y/N) " decision
-  if [ "$decision" != "Y" ] && [ "$decision" != "y" ]; then
-    exit
-  fi
-elif [ -d "$data_path" ]; then
-  echo "Running in CI environment. Proceeding with certificate initialization..."
+# For GitHub Actions, always proceed without prompts
+if [ -d "$data_path" ]; then
+  echo "Running in GitHub Action. Proceeding with certificate initialization..."
 fi
 
-if [ ! -e "$data_path/conf/options-ssl-nginx.conf" ] || [ ! -e "$data_path/conf/ssl-dhparams.pem" ]; then
+if [ ! -f "$data_path/conf/options-ssl-nginx.conf" ] || [ ! -f "$data_path/conf/ssl-dhparams.pem" ]; then
   echo "### Downloading recommended TLS parameters ..."
   mkdir -p "$data_path/conf"
   curl -s https://raw.githubusercontent.com/certbot/certbot/master/certbot-nginx/certbot_nginx/_internal/tls_configs/options-ssl-nginx.conf > "$data_path/conf/options-ssl-nginx.conf"

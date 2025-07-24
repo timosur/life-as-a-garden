@@ -46,7 +46,7 @@ jobs:
     - name: Initialize Let's Encrypt certificates (first time only)
       run: |
         # Check if certificates already exist
-        if [ ! -f "./certbot/conf/live/garden.timosur.com/fullchain.pem" ]; then
+        if [ ! -f "/var/lib/garden/certbot/conf/live/garden.timosur.com/fullchain.pem" ]; then
           echo "SSL certificates not found. Initializing Let's Encrypt..."
           chmod +x ./init-letsencrypt.sh
           ./init-letsencrypt.sh
