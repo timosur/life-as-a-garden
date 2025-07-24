@@ -9,7 +9,7 @@ domains=(garden.timosur.com)
 rsa_key_size=4096
 data_path="./certbot"
 email="garden@timosur.com"
-staging=0 # Set to 1 if you're testing your setup to avoid hitting request limits
+staging=1 # Set to 1 if you're testing your setup to avoid hitting request limits
 
 # For automated deployments, don't prompt for confirmation
 if [ -d "$data_path" ] && [ -z "$CI" ]; then
@@ -50,16 +50,27 @@ echo
 
 echo "### Testing webroot accessibility ..."
 # Create a test file to verify the webroot is accessible
-echo "test" > "$data_path/www/.well-known/acme-challenge/test"
+echo "test-$(date +%s)" > "$data_path/www/.well-known/acme-challenge/test"
 sleep 5
-# Test if the file is accessible via HTTP
-if curl -f "http://garden.timosur.com/.well-known/acme-challenge/test" > /dev/null 2>&1; then
+
+# Test if the file is accessible via HTTP with verbose output
+echo "Testing: http://garden.timosur.com/.well-known/acme-challenge/test"
+if curl -v -f "http://garden.timosur.com/.well-known/acme-challenge/test" 2>&1; then
   echo "✓ Webroot is accessible"
   rm "$data_path/www/.well-known/acme-challenge/test"
 else
-  echo "✗ Webroot is not accessible. Check nginx configuration and DNS."
-  echo "Ensure garden.timosur.com points to this server's IP address."
+  echo "✗ Webroot is not accessible. Debug information:"
+  echo "1. Check if nginx is running:"
+  docker-compose ps nginx
+  echo "2. Check nginx logs:"
+  docker-compose logs --tail=20 nginx
+  echo "3. Check if the test file exists:"
+  ls -la "$data_path/www/.well-known/acme-challenge/"
+  echo "4. Test local nginx access:"
+  docker-compose exec nginx curl -f "http://localhost/.well-known/acme-challenge/test" || echo "Local test failed"
+  
   rm -f "$data_path/www/.well-known/acme-challenge/test"
+  echo "Fix the above issues before proceeding."
   exit 1
 fi
 echo
