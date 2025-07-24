@@ -44,8 +44,8 @@ docker-compose -f docker-compose.yml -f docker-compose.yml run --rm --entrypoint
 echo
 
 echo "### Starting nginx ..."
-# Build and start nginx with production config for SSL setup
-docker-compose -f docker-compose.yml -f docker-compose.ssl.yml up --force-recreate -d nginx
+# Build and start nginx
+docker-compose -f docker-compose.yml -f docker-compose.yml up --force-recreate -d nginx
 echo
 
 echo "### Testing webroot accessibility ..."
