@@ -3,10 +3,7 @@
 
 .plant-status-changes {
   background: $color-bg-white;
-  border-radius: $border-radius-large;
   padding: $padding-large;
-  box-shadow: $box-shadow-default;
-  border: 1px solid $color-primary-light;
   overflow-y: auto;
   @include custom-scrollbar;
 
@@ -86,8 +83,6 @@
   font-size: $font-size-large;
   margin-bottom: $margin-xl;
   padding: $margin-large;
-  background: $color-bg-light;
-  border-radius: $border-radius-small;
 
   .summary-line {
     font-size: $font-size-regular;
