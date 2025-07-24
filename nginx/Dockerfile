@@ -3,10 +3,7 @@ FROM nginx:alpine
 # Install openssl for dhparam generation
 RUN apk add --no-cache openssl
 
-# Copy nginx configurations
-COPY nginx*.conf /etc/nginx/
-
-# Use local config by default
+# Use nginx configuration file from the build context
 COPY nginx.conf /etc/nginx/nginx.conf
 
 # Create directory for Let's Encrypt challenges
