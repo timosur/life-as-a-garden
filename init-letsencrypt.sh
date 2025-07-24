@@ -29,6 +29,10 @@ if [ ! -e "$data_path/conf/options-ssl-nginx.conf" ] || [ ! -e "$data_path/conf/
   echo
 fi
 
+echo "### Creating certbot webroot directory ..."
+mkdir -p "$data_path/www/.well-known/acme-challenge"
+echo
+
 echo "### Creating dummy certificate for $domains ..."
 path="/etc/letsencrypt/live/$domains"
 mkdir -p "$data_path/conf/live/$domains"
@@ -42,6 +46,22 @@ echo
 echo "### Starting nginx ..."
 # Build and start nginx with production config for SSL setup
 docker-compose -f docker-compose.yml -f docker-compose.yml up --force-recreate -d nginx
+echo
+
+echo "### Testing webroot accessibility ..."
+# Create a test file to verify the webroot is accessible
+echo "test" > "$data_path/www/.well-known/acme-challenge/test"
+sleep 5
+# Test if the file is accessible via HTTP
+if curl -f "http://garden.timosur.com/.well-known/acme-challenge/test" > /dev/null 2>&1; then
+  echo "✓ Webroot is accessible"
+  rm "$data_path/www/.well-known/acme-challenge/test"
+else
+  echo "✗ Webroot is not accessible. Check nginx configuration and DNS."
+  echo "Ensure garden.timosur.com points to this server's IP address."
+  rm -f "$data_path/www/.well-known/acme-challenge/test"
+  exit 1
+fi
 echo
 
 echo "### Deleting dummy certificate for $domains ..."
