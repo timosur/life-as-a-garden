@@ -15,9 +15,9 @@ services:
       - rmapi-wrapper
     restart: unless-stopped
     volumes:
-      # For production SSL certificates
-      - ./certbot/conf:/etc/letsencrypt
-      - ./certbot/www:/var/www/certbot
+      # For production SSL certificates - using host directory outside repo for persistence
+      - /var/lib/garden/certbot/conf:/etc/letsencrypt
+      - /var/lib/garden/certbot/www:/var/www/certbot
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:80/health"]
       interval: 60s
@@ -30,8 +30,8 @@ services:
     container_name: garden-certbot
     restart: unless-stopped
     volumes:
-      - ./certbot/conf:/etc/letsencrypt
-      - ./certbot/www:/var/www/certbot
+      - /var/lib/garden/certbot/conf:/etc/letsencrypt
+      - /var/lib/garden/certbot/www:/var/www/certbot
     entrypoint: "/bin/sh -c 'trap exit TERM; while :; do certbot renew; sleep 12h & wait $!; done;'"
 
   backend:
