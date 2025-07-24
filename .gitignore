@@ -2,3 +2,11 @@
 /*.txt
 /*.png
 /*.json
+
+# Database files - now stored in persistent location /var/lib/garden/db
+backend/db/
+backend/*.db
+
+# Environment files
+backend/.env
+garden/.env

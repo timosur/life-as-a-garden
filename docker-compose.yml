@@ -19,8 +19,9 @@ services:
       # Mount volumes for persistent data
       - ./backend/input:/app/input
       - ./backend/output:/app/output
-      # Mount database directory for persistence
-      - ./backend/db:/app/db
+      # Mount database directory for persistence - using host directory outside repo
+      # This ensures the database survives deployments and repository updates
+      - /var/lib/garden/db:/app/db
     restart: unless-stopped
     depends_on:
       - rmapi-wrapper
