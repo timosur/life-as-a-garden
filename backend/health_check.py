@@ -194,9 +194,7 @@ class HealthChecker:
         """Check rmapi-wrapper service availability."""
         try:
             async with httpx.AsyncClient(timeout=5.0) as client:
-                response = await client.get(
-                    f"{settings.rmapi_service_url}/api/rmapi/health"
-                )
+                response = await client.get(f"{settings.rmapi_service_url}/health")
                 if response.status_code == 200:
                     health_status["services"]["rmapi_wrapper"] = {
                         "status": "healthy",
