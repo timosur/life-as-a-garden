@@ -7,7 +7,7 @@ set -e
 
 domains=(garden.timosur.com)
 rsa_key_size=4096
-data_path="./certbot"
+data_path="/var/lib/garden/certbot"
 email="garden@timosur.com"
 staging=0 # Set to 1 if you're testing your setup to avoid hitting request limits
 
@@ -36,12 +36,11 @@ echo
 echo "### Creating dummy certificate for $domains ..."
 path="/etc/letsencrypt/live/$domains"
 mkdir -p "$data_path/conf/live/$domains"
-docker-compose -f docker-compose.yml -f docker-compose.yml run --rm --entrypoint "\
-  mkdir -p '$path' && \
-  openssl req -x509 -nodes -newkey rsa:$rsa_key_size -days 1\
-    -keyout '$path/privkey.pem' \
-    -out '$path/fullchain.pem' \
-    -subj '/CN=localhost'" certbot
+# Create dummy certificates directly on the host in the mounted volume path
+openssl req -x509 -nodes -newkey rsa:$rsa_key_size -days 1 \
+  -keyout "$data_path/conf/live/$domains/privkey.pem" \
+  -out "$data_path/conf/live/$domains/fullchain.pem" \
+  -subj '/CN=localhost'
 echo
 
 echo "### Starting nginx ..."
