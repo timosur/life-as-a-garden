@@ -3,6 +3,9 @@ FROM nginx:alpine
 # Install openssl for dhparam generation
 RUN apk add --no-cache openssl
 
+# Remove default nginx configuration
+RUN rm -f /etc/nginx/conf.d/default.conf
+
 # Use nginx configuration file from the build context
 COPY nginx.conf /etc/nginx/nginx.conf
 
