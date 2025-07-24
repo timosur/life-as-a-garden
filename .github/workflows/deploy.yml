@@ -32,7 +32,7 @@ jobs:
         # Create frontend .env file for production deployment
         mkdir -p garden
         cat > garden/.env << EOF
-        VITE_API_BASE_URL=https://garden.timosur.com/api
+        VITE_API_BASE_URL=https://garden.timosur.com
         EOF
       
     - name: Stop existing containers
