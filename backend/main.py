@@ -21,7 +21,13 @@ class DownloadRequest(BaseModel):
     local_path: Optional[str] = None
 
 
-app = FastAPI(title="Life as a Garden API", version="1.0.0")
+app = FastAPI(
+    title="Life as a Garden API",
+    version="1.0.0",
+    docs_url="/api/docs",
+    redoc_url=None,
+    openapi_url="/api/openapi.json",
+)
 
 # Initialize the database
 garden_db = GardenDatabase("db/garden.db")
