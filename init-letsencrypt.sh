@@ -50,24 +50,39 @@ echo
 
 echo "### Testing webroot accessibility ..."
 # Create a test file to verify the webroot is accessible
-echo "test-$(date +%s)" > "$data_path/www/.well-known/acme-challenge/test"
+test_content="test-$(date +%s)"
+echo "$test_content" > "$data_path/www/.well-known/acme-challenge/test"
 sleep 5
 
-# Test if the file is accessible via HTTP with verbose output
+# Test if the file is accessible via HTTP and check the content
 echo "Testing: http://garden.timosur.com/.well-known/acme-challenge/test"
-if curl -v -f "http://garden.timosur.com/.well-known/acme-challenge/test" 2>&1; then
-  echo "✓ Webroot is accessible"
+response=$(curl -f "http://garden.timosur.com/.well-known/acme-challenge/test" 2>/dev/null || echo "CURL_FAILED")
+
+if [ "$response" = "$test_content" ]; then
+  echo "✓ Webroot is accessible and serving correct content"
   rm "$data_path/www/.well-known/acme-challenge/test"
 else
-  echo "✗ Webroot is not accessible. Debug information:"
+  echo "✗ Webroot is not serving the correct content. Debug information:"
+  echo "Expected: '$test_content'"
+  echo "Got: '$response'"
+  echo ""
   echo "1. Check if nginx is running:"
   docker-compose ps nginx
+  echo ""
   echo "2. Check nginx logs:"
   docker-compose logs --tail=20 nginx
-  echo "3. Check if the test file exists:"
+  echo ""
+  echo "3. Check if the test file exists on host:"
   ls -la "$data_path/www/.well-known/acme-challenge/"
-  echo "4. Test local nginx access:"
+  echo ""
+  echo "4. Check if the test file exists inside nginx container:"
+  docker-compose exec nginx ls -la /var/www/certbot/.well-known/acme-challenge/ || echo "Directory not found in container"
+  echo ""
+  echo "5. Test local nginx access:"
   docker-compose exec nginx curl -f "http://localhost/.well-known/acme-challenge/test" || echo "Local test failed"
+  echo ""
+  echo "6. Check nginx configuration:"
+  docker-compose exec nginx nginx -T | grep -A 5 -B 5 "\.well-known"
   
   rm -f "$data_path/www/.well-known/acme-challenge/test"
   echo "Fix the above issues before proceeding."
