@@ -21,6 +21,12 @@ jobs:
         mkdir -p backend
         cat > backend/.env << EOF
         OPENAI_API_KEY=${{ secrets.OPENAI_API_KEY }}
+        SMTP_HOST=smtp.gmail.com
+        SMTP_PORT=587
+        SMTP_USERNAME=${{ secrets.SMTP_USERNAME }}
+        SMTP_PASSWORD=${{ secrets.SMTP_PASSWORD }}
+        NOTIFICATION_EMAIL=lebensgarten@timosur.com
+        EMAIL_NOTIFICATIONS_ENABLED=true
         EOF
         
         # Create frontend .env file for production deployment

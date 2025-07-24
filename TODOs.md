@@ -1,1 +1,0 @@
-- Stelle sicher, dass beim Watering die Daily updates immer nur 1x ausgeführt werden

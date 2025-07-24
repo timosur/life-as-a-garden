@@ -173,6 +173,17 @@ def water_plants_from_analysis():
                 "error": f"Failed to print and upload garden: {str(e)}",
             }
 
+        # Send email notification for successful analysis run
+        try:
+            from utils.email_service import email_service
+
+            email_service.send_analysis_success_notification(
+                analysis_result.to_json(), stats
+            )
+        except Exception as e:
+            # Don't let email failures affect the main operation
+            print(f"Failed to send analysis success notification: {str(e)}")
+
         return {
             "success": True,
             "analysis": analysis_result.to_json(),
@@ -314,6 +325,21 @@ async def health_check():
     6. System resources (if available)
     """
     return await health_checker.check()
+
+
+@app.post("/api/notifications/test-email")
+def test_email_configuration():
+    """Test the email notification configuration by sending a test email."""
+    try:
+        from utils.email_service import email_service
+
+        result = email_service.test_email_configuration()
+        return result
+    except Exception as e:
+        return {
+            "success": False,
+            "message": f"Failed to test email configuration: {str(e)}",
+        }
 
 
 if __name__ == "__main__":

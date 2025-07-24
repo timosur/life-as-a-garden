@@ -26,6 +26,8 @@ class HealthChecker:
 
     def __init__(self, garden_db: GardenDatabase):
         self.garden_db = garden_db
+        self._last_notification_time = None
+        self._notification_cooldown = 3600  # 1 hour cooldown between notifications
 
     async def check(self) -> Dict[str, Any]:
         """
@@ -58,8 +60,37 @@ class HealthChecker:
         # Determine final status
         self._determine_final_status(health_status)
 
+        # Send notification if health check failed
+        await self._handle_health_notification(health_status)
+
         # Return appropriate HTTP response
         return self._create_response(health_status)
+
+    async def _handle_health_notification(self, health_status: Dict[str, Any]) -> None:
+        """Send email notification if health check failed and cooldown period has passed."""
+        if health_status["overall_status"] == "healthy":
+            return
+
+        # Check cooldown period
+        current_time = datetime.utcnow()
+        if (
+            self._last_notification_time
+            and (current_time - self._last_notification_time).total_seconds()
+            < self._notification_cooldown
+        ):
+            return
+
+        try:
+            from utils.email_service import email_service
+
+            success = email_service.send_health_check_failure_notification(
+                health_status
+            )
+            if success:
+                self._last_notification_time = current_time
+        except Exception as e:
+            # Don't let email failures affect health check results
+            print(f"Failed to send health check notification: {str(e)}")
 
     async def _check_database(self, health_status: Dict[str, Any]) -> None:
         """Check database connectivity and basic operations."""

@@ -8,6 +8,14 @@ class Settings(BaseSettings):
     frontend_url: str = "http://localhost:5173/"
     rmapi_service_url: str = "http://localhost:8001"
 
+    # Email settings
+    smtp_host: str = "smtp.gmail.com"
+    smtp_port: int = 587
+    smtp_username: str = ""
+    smtp_password: str = ""
+    notification_email: str = "lebensgarten@timosur.com"
+    email_notifications_enabled: bool = True
+
     model_config = SettingsConfigDict(env_file=".env")
 
     @property
