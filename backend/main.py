@@ -7,8 +7,9 @@ from typing import Optional
 from database import GardenDatabase
 from utils.image_analysis import analyze_checklist_image
 from utils.pdf_generator import print_garden_to_pdf_sync as print_garden_to_pdf
-from utils.rmapi_client import archive_and_upload_remarkable, RmapiClient
+from utils.rmapi_client import archive_and_upload_remarkable
 from settings import settings
+from health_check import create_health_checker
 
 
 class WateringLimitUpdate(BaseModel):
@@ -24,6 +25,9 @@ app = FastAPI(title="Life as a Garden API", version="1.0.0")
 
 # Initialize the database
 garden_db = GardenDatabase("db/garden.db")
+
+# Initialize health checker
+health_checker = create_health_checker(garden_db)
 
 openai.api_key = settings.openai_api_key
 
@@ -297,8 +301,19 @@ def water_single_plant(plant_identifier: str, by_id: bool = False):
 
 
 @app.get("/health")
-def health_check():
-    return {"status": "healthy"}
+async def health_check():
+    """
+    Comprehensive health check for all system components.
+
+    Checks:
+    1. Database connectivity
+    2. OpenAI API availability and credits
+    3. Frontend service availability
+    4. rmapi-wrapper service availability
+    5. File system permissions
+    6. System resources (if available)
+    """
+    return await health_checker.check()
 
 
 if __name__ == "__main__":
