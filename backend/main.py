@@ -10,6 +10,7 @@ from utils.pdf_generator import print_garden_to_pdf_sync as print_garden_to_pdf
 from utils.rmapi_client import archive_and_upload_remarkable
 from settings import settings
 from health_check import create_health_checker
+from utils.email_service import email_service
 
 
 class WateringLimitUpdate(BaseModel):
@@ -181,8 +182,6 @@ def water_plants_from_analysis():
 
         # Send email notification for successful analysis run
         try:
-            from utils.email_service import email_service
-
             email_service.send_analysis_success_notification(
                 analysis_result.to_json(), stats
             )
@@ -200,6 +199,14 @@ def water_plants_from_analysis():
         }
 
     except Exception as e:
+        # Send email notification for analysis failure
+        try:
+            email_service.send_analysis_failure_notification(
+                str(e), garden_db.get_database_stats()
+            )
+        except Exception as email_error:
+            print(f"Failed to send analysis failure notification: {str(email_error)}")
+
         return {"success": False, "error": f"Failed to process watering: {str(e)}"}
 
 

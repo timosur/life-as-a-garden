@@ -115,6 +115,44 @@ Dein Lebensgarten System 🌿
 
         return self._send_email(subject, body.strip())
 
+    def send_analysis_failure_notification(
+        self, error_message: str, stats: Dict[str, Any]
+    ) -> bool:
+        """
+        Send notification for failed analysis run.
+
+        Args:
+            error_message: Error message from the analysis function
+            stats: Garden statistics
+
+        Returns:
+            bool: True if notification was sent successfully
+        """
+        timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+
+        subject = f"⚠️ Lebensgarten - Analyse fehlgeschlagen ({timestamp})"
+
+        # Extract key information from stats
+        total_plants = stats.get("total_plants", "N/A")
+
+        body = f"""
+Hallo!
+
+Die Analyse des Lebensgartens ist fehlgeschlagen.
+
+📊 Garten-Statistiken:
+• Gesamte Pflanzen: {total_plants}
+
+⏰ Zeitpunkt: {timestamp}
+
+Bitte prüfe das System und behebe die Probleme.
+
+Beste Grüße,
+Dein Lebensgarten System 🌿
+        """
+
+        return self._send_email(subject, body.strip())
+
     def send_health_check_failure_notification(
         self, health_status: Dict[str, Any]
     ) -> bool:

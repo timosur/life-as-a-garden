@@ -176,14 +176,9 @@ def analyze_checklist_image(
             # Try to find any PDF files in the directory
             pdf_files = [f for f in os.listdir(input_path) if f.endswith(".pdf")]
             print(f"📄 PDF files found: {pdf_files}")
-            if pdf_files:
-                # Use the first PDF file found
-                pdf_path = os.path.join(input_path, pdf_files[0])
-                print(f"🔄 Using PDF file: {pdf_path}")
-            else:
-                raise FileNotFoundError(
-                    f"No PDF file found for conversion. Available files: {os.listdir(input_path)}"
-                )
+            raise FileNotFoundError(
+                f"Lebensgarten _remarks.pdf not found for conversion. Available files: {os.listdir(input_path)}"
+            )
 
         magick_cmd = [
             "convert",
@@ -366,9 +361,9 @@ Be robust: if a checkbox is clearly marked in any way (checked, crossed, filled,
             print(f"Error decoding JSON: {e}")
             return {"error": "Invalid JSON format in response", "raw_response": result}
 
-    except FileNotFoundError:
+    except FileNotFoundError as e:
         return {
-            "error": f"Image file not found: {image_file_path if image_file_path else 'unknown path'}"
+            "error": f"File not found during analysis: {str(e)}",
         }
     except Exception as e:
         print(f"Error analyzing image: {e}")
