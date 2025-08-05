@@ -86,62 +86,6 @@ class DatabaseMigrator:
             print(f"❌ Failed to stamp database: {str(e)}")
             return False
 
-    def initialize_for_existing_db(self) -> bool:
-        """
-        Initialize Alembic for an existing database.
-        This checks if the database has the expected schema and stamps it.
-        """
-        try:
-            engine = create_engine(self.db_url)
-
-            # Check if all expected tables exist
-            with engine.connect() as connection:
-                # Check for main tables
-                tables_to_check = [
-                    "areals",
-                    "plants",
-                    "watering_history",
-                    "daily_watering_config",
-                    "plant_status_changes",
-                ]
-
-                existing_tables = []
-                for table in tables_to_check:
-                    try:
-                        result = connection.execute(
-                            text(
-                                f"SELECT name FROM sqlite_master WHERE type='table' AND name='{table}'"
-                            )
-                        )
-                        if result.fetchone():
-                            existing_tables.append(table)
-                    except Exception:
-                        continue
-
-                if "plant_status_changes" in existing_tables:
-                    # Database has the new schema, stamp with latest
-                    print(
-                        "📋 Database has latest schema, stamping with head revision..."
-                    )
-                    return self.stamp_head()
-                elif (
-                    len(existing_tables) >= 4
-                ):  # Has basic tables but not status changes
-                    # Database has old schema, stamp with revision 001 and upgrade
-                    print(
-                        "📋 Database has old schema, running incremental migration..."
-                    )
-                    command.stamp(self.alembic_cfg, "001")
-                    return self.run_migrations()
-                else:
-                    # New database or incomplete schema, run all migrations
-                    print("📋 New or incomplete database, running all migrations...")
-                    return self.run_migrations()
-
-        except Exception as e:
-            print(f"❌ Failed to initialize database: {str(e)}")
-            return False
-
 
 def run_migrations_on_startup(db_path: str = "db/garden.db") -> bool:
     """
@@ -154,7 +98,7 @@ def run_migrations_on_startup(db_path: str = "db/garden.db") -> bool:
         bool: True if migrations were successful, False otherwise
     """
     migrator = DatabaseMigrator(db_path)
-    return migrator.initialize_for_existing_db()
+    return migrator.run_migrations()
 
 
 if __name__ == "__main__":
