@@ -3,11 +3,15 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from typing import Optional
+from datetime import date
 
 from database import GardenDatabase
-from utils.image_analysis import analyze_checklist_image
-from utils.pdf_generator import print_garden_to_pdf_sync as print_garden_to_pdf
-from utils.rmapi_client import archive_and_upload_remarkable
+from utils.image_analysis import analyze_checklist_and_notes_image
+from utils.pdf_generator import (
+    print_garden_to_pdf_sync as print_garden_to_pdf,
+    print_notes_to_pdf_sync,
+)
+from utils.rmapi_client import archive_and_upload_remarkable, upload_notes_to_remarkable
 from settings import settings
 from health_check import create_health_checker
 from utils.email_service import email_service
@@ -98,11 +102,14 @@ def update_plant_health(plant_id: int, health: str):
 def print_garden():
     """Print the garden to PDF"""
     try:
-        pdf_path = print_garden_to_pdf()
+        garden_pdf_path = print_garden_to_pdf()
+        notes_pdf_path = print_notes_to_pdf_sync()
+
         return {
             "success": True,
             "message": "Garden printed successfully",
-            "pdf_path": pdf_path,
+            "garden_pdf_path": garden_pdf_path,
+            "notes_pdf_path": notes_pdf_path,
         }
     except Exception as e:
         return {"success": False, "error": f"Failed to print garden: {str(e)}"}
@@ -110,14 +117,48 @@ def print_garden():
 
 @app.get("/api/garden/analyze")
 def analyze_garden():
-    """Analyze the garden checklist image"""
+    """Analyze the garden checklist image and notes"""
 
     try:
-        print("🔍 Analyzing checklist image...")
-        result = analyze_checklist_image()
+        print("🔍 Analyzing checklist image and notes...")
+        result = analyze_checklist_and_notes_image()
         print("✅ Analysis completed")
 
-        return result
+        # Save notes if extracted from analysis
+        notes_save_result = None
+        if hasattr(result, "notes") and result.notes:
+            try:
+                from datetime import date
+
+                today = date.today()
+
+                # Check if notes already exist for today
+                if not garden_db.note_exists_for_date(today):
+                    note_id = garden_db.create_note(result.notes, today)
+                    notes_save_result = {
+                        "success": True,
+                        "note_id": note_id,
+                        "message": "Notes saved successfully",
+                    }
+                else:
+                    notes_save_result = {
+                        "success": False,
+                        "message": "Notes already exist for today, skipping save",
+                    }
+            except Exception as e:
+                notes_save_result = {
+                    "success": False,
+                    "error": f"Failed to save notes: {str(e)}",
+                }
+
+        # Include notes save result in response
+        if isinstance(result, dict) and "error" in result:
+            return result
+        else:
+            response = result.to_json()
+            if notes_save_result:
+                response["notes_save_result"] = notes_save_result
+            return response
 
     except Exception as e:
         print(f"❌ Error during analysis: {str(e)}")
@@ -127,13 +168,13 @@ def analyze_garden():
 @app.post("/api/garden/water")
 def water_plants_from_analysis():
     """
-    Analyze the garden checklist image and water the checked plants.
+    Analyze the garden checklist image and notes, then water the checked plants.
     Updates plant status based on watering algorithm.
     After watering, prints the garden to PDF and uploads to reMarkable.
     """
     try:
-        # First, analyze the checklist image
-        analysis_result = analyze_checklist_image()
+        # First, analyze the checklist image and notes
+        analysis_result = analyze_checklist_and_notes_image()
 
         # Check if analysis_result is a dictionary with an error (error case)
         if isinstance(analysis_result, dict) and "error" in analysis_result:
@@ -152,6 +193,33 @@ def water_plants_from_analysis():
 
         # Water the checked plants
         watering_result = garden_db.water_plants(checked_plants)
+
+        # Save notes if extracted from analysis
+        notes_save_result = None
+        if hasattr(analysis_result, "notes") and analysis_result.notes:
+            try:
+                from datetime import date
+
+                today = date.today()
+
+                # Check if notes already exist for today
+                if not garden_db.note_exists_for_date(today):
+                    note_id = garden_db.create_note(analysis_result.notes, today)
+                    notes_save_result = {
+                        "success": True,
+                        "note_id": note_id,
+                        "message": "Notes saved successfully",
+                    }
+                else:
+                    notes_save_result = {
+                        "success": False,
+                        "message": "Notes already exist for today, skipping save",
+                    }
+            except Exception as e:
+                notes_save_result = {
+                    "success": False,
+                    "error": f"Failed to save notes: {str(e)}",
+                }
 
         # Get updated garden stats
         stats = garden_db.get_database_stats()
@@ -180,6 +248,30 @@ def water_plants_from_analysis():
                 "error": f"Failed to print and upload garden: {str(e)}",
             }
 
+        # Generate and upload Notes PDF
+        notes_result = None
+        try:
+            # Generate Notes PDF
+            notes_pdf_path = print_notes_to_pdf_sync()
+
+            # Upload Notes to reMarkable
+            notes_upload_result = upload_notes_to_remarkable(notes_pdf_path)
+
+            notes_result = {
+                "success": True,
+                "pdf_path": notes_pdf_path,
+                "uploaded_to_remarkable": notes_upload_result["uploaded_to_remarkable"],
+                "message": "Notes printed and uploaded successfully"
+                if notes_upload_result["success"]
+                else "Notes printed but upload failed",
+                "upload_details": notes_upload_result,
+            }
+        except Exception as e:
+            notes_result = {
+                "success": False,
+                "error": f"Failed to print and upload notes: {str(e)}",
+            }
+
         # Send email notification for successful analysis run
         try:
             email_service.send_analysis_success_notification(
@@ -196,6 +288,8 @@ def water_plants_from_analysis():
             "garden_stats": stats,
             "daily_watering_stats": daily_stats,
             "print_result": print_result,
+            "notes_result": notes_result,
+            "notes_save_result": notes_save_result,
         }
 
     except Exception as e:
@@ -322,6 +416,75 @@ def water_single_plant(plant_identifier: str, by_id: bool = False):
 
     except Exception as e:
         return {"success": False, "error": f"Failed to water plant: {str(e)}"}
+
+
+# Notes API endpoints
+@app.get("/api/notes")
+def get_all_notes():
+    """Get all notes ordered by extraction date."""
+    try:
+        notes = garden_db.get_all_notes()
+        return {"success": True, "notes": notes}
+    except Exception as e:
+        return {"success": False, "error": f"Failed to get notes: {str(e)}"}
+
+
+@app.get("/api/notes/date/{date_str}")
+def get_notes_by_date(date_str: str):
+    """Get notes for a specific date (YYYY-MM-DD format)."""
+    try:
+        from datetime import datetime
+
+        # Parse the date string
+        date_obj = datetime.strptime(date_str, "%Y-%m-%d").date()
+        notes = garden_db.get_notes_by_date(date_obj)
+        return {"success": True, "notes": notes, "date": date_str}
+    except ValueError as e:
+        return {
+            "success": False,
+            "error": f"Invalid date format. Use YYYY-MM-DD: {str(e)}",
+        }
+    except Exception as e:
+        return {"success": False, "error": f"Failed to get notes: {str(e)}"}
+
+
+@app.get("/api/notes/range/{start_date}/{end_date}")
+def get_notes_by_date_range(start_date: str, end_date: str):
+    """Get notes within a date range (YYYY-MM-DD format)."""
+    try:
+        from datetime import datetime
+
+        # Parse the date strings
+        start_date_obj = datetime.strptime(start_date, "%Y-%m-%d").date()
+        end_date_obj = datetime.strptime(end_date, "%Y-%m-%d").date()
+
+        notes = garden_db.get_notes_by_date_range(start_date_obj, end_date_obj)
+        return {
+            "success": True,
+            "notes": notes,
+            "start_date": start_date,
+            "end_date": end_date,
+        }
+    except ValueError as e:
+        return {
+            "success": False,
+            "error": f"Invalid date format. Use YYYY-MM-DD: {str(e)}",
+        }
+    except Exception as e:
+        return {"success": False, "error": f"Failed to get notes: {str(e)}"}
+
+
+@app.delete("/api/notes/{note_id}")
+def delete_note(note_id: int):
+    """Delete a specific note."""
+    try:
+        success = garden_db.delete_note(note_id)
+        if success:
+            return {"success": True, "message": f"Note {note_id} deleted successfully"}
+        else:
+            return {"success": False, "error": f"Note {note_id} not found"}
+    except Exception as e:
+        return {"success": False, "error": f"Failed to delete note: {str(e)}"}
 
 
 @app.get("/api/health")

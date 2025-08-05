@@ -6,8 +6,10 @@ while maintaining the same interface as the original GardenDatabase class.
 """
 
 from typing import List, Dict, Any
+from datetime import date
 from .base import DatabaseConnection
 from .services import GardenService
+from .services.notes import NotesService
 from .utils import DataSeeder
 from .migrate import run_migrations_on_startup
 
@@ -25,6 +27,7 @@ class GardenDatabase:
         self.db_path = db_path
         self.db_connection = DatabaseConnection(db_path)
         self.garden_service = GardenService(self.db_connection)
+        self.notes_service = NotesService(self.db_connection)
         self.data_seeder = DataSeeder(self.db_connection)
         self.init_database()
 
@@ -143,3 +146,34 @@ class GardenDatabase:
     def seed_initial_data(self) -> bool:
         """Seed the database with initial garden data if it's empty."""
         return self.data_seeder.seed_initial_data()
+
+    # Notes methods
+    def create_note(self, content: str, extracted_at: date) -> int:
+        """Create a new note entry."""
+        return self.notes_service.create_note(content, extracted_at)
+
+    def get_notes_by_date(self, date_filter: date) -> List[Dict[str, Any]]:
+        """Get all notes for a specific date."""
+        return self.notes_service.get_notes_by_date(date_filter)
+
+    def get_all_notes(self) -> List[Dict[str, Any]]:
+        """Get all notes ordered by extraction date."""
+        return self.notes_service.get_all_notes()
+
+    def get_notes_by_date_range(
+        self, start_date: date, end_date: date
+    ) -> List[Dict[str, Any]]:
+        """Get notes within a date range."""
+        return self.notes_service.get_notes_by_date_range(start_date, end_date)
+
+    def update_note(self, note_id: int, content: str) -> bool:
+        """Update note content."""
+        return self.notes_service.update_note(note_id, content)
+
+    def delete_note(self, note_id: int) -> bool:
+        """Delete a note."""
+        return self.notes_service.delete_note(note_id)
+
+    def note_exists_for_date(self, date_filter: date) -> bool:
+        """Check if a note already exists for a specific date."""
+        return self.notes_service.note_exists_for_date(date_filter)

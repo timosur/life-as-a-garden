@@ -71,3 +71,20 @@ export interface PlantStatusChangesResponse {
   status_changes: PlantStatusChange[];
   error?: string;
 }
+
+export interface Note {
+  id: number;
+  content: string;
+  extracted_at: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface NotesResponse {
+  success: boolean;
+  notes: Note[];
+  error?: string;
+  date?: string;
+  start_date?: string;
+  end_date?: string;
+}

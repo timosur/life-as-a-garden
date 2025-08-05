@@ -112,6 +112,19 @@ class RmapiClient:
         data = {"source_path": source_path, "destination_path": destination_path}
         return self._make_request("POST", "/api/rmapi/mv", json=data)
 
+    def rm(self, remote_path: str) -> dict:
+        """
+        Delete a file or folder on reMarkable device.
+
+        Args:
+            remote_path: Path on reMarkable device to delete
+
+        Returns:
+            dict: Operation result
+        """
+        data = {"remote_path": remote_path}
+        return self._make_request("POST", "/api/rmapi/rm", json=data)
+
     def put(self, file_path: str, destination_path: str) -> dict:
         """
         Upload a file to reMarkable device.
@@ -242,5 +255,63 @@ def archive_and_upload_remarkable(pdf_path: str) -> dict:
         return {
             "success": False,
             "uploaded_to_remarkable": False,
-            "error": f"Failed to upload to reMarkable: {str(e)}",
+            "message": f"Error during reMarkable upload: {str(e)}",
+        }
+
+
+def upload_notes_to_remarkable(pdf_path: str) -> dict:
+    """
+    Remove existing Notes file and upload new Notes PDF to reMarkable.
+
+    Args:
+        pdf_path: Path to the Notes PDF file to upload
+
+    Returns:
+        dict: Detailed result containing success status and operation details
+    """
+    try:
+        client = RmapiClient()
+
+        # Step 1: Try to remove existing Notes file
+        print("🗑️ Attempting to remove existing Notes file...")
+        try:
+            rm_result = client.rm("Journal/Lebensgarten/Notes")
+
+            if rm_result.get("success"):
+                print("✅ Existing Notes file removed successfully")
+            else:
+                print(
+                    f"ℹ️ No existing Notes file found or could not remove: {rm_result.get('error', 'Unknown error')}"
+                )
+        except Exception as e:
+            print(f"ℹ️ No existing Notes file found or could not remove: {str(e)}")
+
+        # Step 2: Upload the new Notes PDF
+        print("📤 Uploading new Notes PDF to reMarkable...")
+
+        put_result = client.put(pdf_path, "/Journal/Lebensgarten")
+
+        if put_result.get("success"):
+            print("✅ Notes PDF uploaded successfully to reMarkable!")
+            return {
+                "success": True,
+                "uploaded_to_remarkable": True,
+                "message": "Notes PDF uploaded successfully to reMarkable",
+            }
+        else:
+            error_msg = f"Failed to upload Notes PDF: {put_result.get('error', 'Unknown error')}"
+            print(f"❌ {error_msg}")
+            return {
+                "success": False,
+                "uploaded_to_remarkable": False,
+                "message": error_msg,
+            }
+
+    except Exception as e:
+        error_msg = f"Error during Notes reMarkable upload: {str(e)}"
+        print(f"❌ {error_msg}")
+        return {
+            "success": False,
+            "uploaded_to_remarkable": False,
+            "message": error_msg,
         }

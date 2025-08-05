@@ -11,6 +11,10 @@ class MoveRequest(BaseModel):
     destination_path: str
 
 
+class DeleteRequest(BaseModel):
+    remote_path: str
+
+
 class GetRequest(BaseModel):
     remote_path: str
     local_path: Optional[str] = None
@@ -198,6 +202,21 @@ def mv(request: MoveRequest):
         RmapiResponse with operation result
     """
     command = ["mv", request.source_path, request.destination_path]
+    return run_rmapi_command(command)
+
+
+@app.post("/api/rmapi/rm", response_model=RmapiResponse)
+def rm(request: DeleteRequest):
+    """
+    Delete a file or folder on reMarkable device.
+
+    Args:
+        request: DeleteRequest containing remote_path
+
+    Returns:
+        RmapiResponse with operation result
+    """
+    command = ["rm", request.remote_path]
     return run_rmapi_command(command)
 
 

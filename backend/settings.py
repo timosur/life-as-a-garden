@@ -5,7 +5,7 @@ class Settings(BaseSettings):
     """Application settings with environment variable support."""
 
     openai_api_key: str
-    frontend_url: str = "http://localhost:5173/"
+    frontend_url: str = "http://localhost:5173"
     rmapi_service_url: str = "http://localhost:8001"
 
     # Email settings
