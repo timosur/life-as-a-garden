@@ -183,7 +183,8 @@ def upload_pdf_to_remarkable(pdf_path: str) -> bool:
 
         try:
             mv_result = client.mv(
-                "Lebensgarten/Lebensgarten", f"Lebensgarten/{current_date}"
+                "Journal/Lebensgarten/Lebensgarten",
+                f"Journal/Lebensgarten/Archiv/{current_date}",
             )
 
             if mv_result.get("success"):
@@ -200,7 +201,7 @@ def upload_pdf_to_remarkable(pdf_path: str) -> bool:
         # Step 2: Upload the new PDF
         print("📤 Uploading new PDF to reMarkable...")
 
-        put_result = client.put(pdf_path, "/Lebensgarten")
+        put_result = client.put(pdf_path, "/Journal/Lebensgarten")
 
         if put_result.get("success"):
             print("✅ PDF uploaded successfully to reMarkable!")

@@ -19,7 +19,7 @@ const CanvasGarden = () => {
 
   return (
     <div className="pdf-layout">
-      {/* Page 2: Garden Overview */}
+      {/* Page 1: Garden Overview */}
       <div className="pdf-page page-garden">
         <GardenCanvas
           gardenConfig={gardenConfig}
@@ -29,16 +29,21 @@ const CanvasGarden = () => {
         />
       </div>
 
-      {/* Page 1: Watering Plan/Checklist */}
+      {/* Page 2: Watering Plan/Checklist */}
       <div className="pdf-page page-checklist">
         <WateringPlanCanvas
           plants={plants}
-          width={1000}
-          height={800}
+          width={1100}
+          height={1400}
         />
       </div>
 
-      {/* Page 3: Status Changes */}
+      {/* Page 3: Site to comment on checked water items */}
+      <div className="pdf-page page-comment">
+        {/* Placeholder for comment section */}
+      </div>
+
+      {/* Page 4: Status Changes */}
       <div className="pdf-page page-status-changes">
         <PlantStatusChanges />
       </div>

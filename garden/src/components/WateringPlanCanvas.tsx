@@ -14,7 +14,7 @@ const drawWateringPlan = (wateringCtx: CanvasRenderingContext2D, plants: Plant[]
   const itemHeight = 50;
   const checkboxSize = 20;
   const leftMargin = 50;
-  const maxItemsPerColumn = 8;
+  const maxItemsPerColumn = 24; // Maximale Anzahl von Pflanzen pro Spalte
   const columnWidth = 300; // Breite jeder Spalte
 
   wateringCtx.fillStyle = '#34495e';

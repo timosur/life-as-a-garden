@@ -52,6 +52,16 @@
   align-items: center;
 }
 
+.page-comment {
+  @include flex-column;
+  align-items: center;
+  padding: $padding-xl;
+  background-image: url('../assets/notebook-area-background.png');
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+}
+
 .page-garden {
   @include flex-column;
   align-items: center;
@@ -194,6 +204,17 @@
       border: none !important;
       margin: 0 !important;
     }
+  }
+
+  /* Force background images to print */
+  .page-comment {
+    -webkit-print-color-adjust: exact !important;
+    color-adjust: exact !important;
+    print-color-adjust: exact !important;
+    background-image: url('../assets/notebook-area-background.png') !important;
+    background-size: cover !important;
+    background-position: center !important;
+    background-repeat: no-repeat !important;
   }
 }
 

@@ -48,7 +48,7 @@ def analyze_checklist_image(
     try:
         # Use the rmapi client to download the file (it will be saved to input directory automatically)
         client = RmapiClient()
-        result = client.geta("Lebensgarten/Lebensgarten")
+        result = client.geta("Journal/Lebensgarten/Lebensgarten")
 
         print(f"📊 Download result: {result.get('success', False)}")
         if result.get("local_file_path"):

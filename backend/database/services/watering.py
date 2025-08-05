@@ -225,8 +225,12 @@ class WateringService:
                 # Consecutive day - increase streak
                 new_streak = plant["water_streak"] + 1
             else:
-                # Gap in watering - reset streak
-                new_streak = 1
+                # If more than 3 days gap, reset streak
+                if days_gap > 3:
+                    new_streak = 1
+                else:
+                    # If within 3 days, keep the streak
+                    new_streak = plant["water_streak"]
         else:
             # First time watering
             new_streak = 1
@@ -255,34 +259,30 @@ class WateringService:
             # Healthy plants stay healthy with any watering
             new_health = "healthy"
 
-        # Simplified growth stage calculation (1-5 based on total water count)
-        # Growth is more about total care over time
-        if new_total_count >= 20:
-            new_growth_stage = 5
-        elif new_total_count >= 15:
-            new_growth_stage = 4
-        elif new_total_count >= 10:
-            new_growth_stage = 3
-        elif new_total_count >= 5:
-            new_growth_stage = 2
+        # Simplified growth stage calculation (1-3 based on water streak)
+        # Growth stages: 1=Young, 2=Mature, 3=Flourishing
+        if new_streak >= 5:
+            new_growth_stage = 3  # Flourishing
+        elif new_streak >= 3:
+            new_growth_stage = 2  # Mature
         else:
-            new_growth_stage = 1
+            new_growth_stage = 1  # Young
 
         # Simplified size calculation based on health and growth stage
         if new_health == "dead":
             # Dead plants stay small
             new_size = "small"
         elif new_health == "okay":
-            # Okay plants can grow to medium if well-established
-            if new_growth_stage >= 3:
+            # Okay plants can grow to medium if mature
+            if new_growth_stage >= 2:
                 new_size = "medium"
             else:
                 new_size = "small"
         else:  # healthy
             # Healthy plants can reach full potential
-            if new_growth_stage >= 4:
+            if new_growth_stage == 3:
                 new_size = "big"
-            elif new_growth_stage >= 2:
+            elif new_growth_stage == 2:
                 new_size = "medium"
             else:
                 new_size = "small"

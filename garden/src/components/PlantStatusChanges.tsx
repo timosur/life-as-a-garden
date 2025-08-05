@@ -110,13 +110,13 @@ export const PlantStatusChanges: React.FC<PlantStatusChangesProps> = ({ classNam
         <table className="changes-table">
           <thead>
             <tr>
-              <th>Zeit</th>
               <th>Pflanze</th>
               <th>Gesundheit</th>
               <th>Größe</th>
               <th>Wachstum</th>
               <th>Wasserserie</th>
               <th>Tage ohne Wasser</th>
+              <th>Insgesamt</th>
               <th>Gegossen?</th>
             </tr>
           </thead>
@@ -125,12 +125,6 @@ export const PlantStatusChanges: React.FC<PlantStatusChangesProps> = ({ classNam
               .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
               .map((change) => (
                 <tr key={change.id} className={`change-row ${change.change_type}`}>
-                  <td className="time-cell">
-                    {new Date(change.created_at).toLocaleTimeString('de-DE', {
-                      hour: '2-digit',
-                      minute: '2-digit'
-                    })}
-                  </td>
                   <td className="plant-cell">{change.plant_name}</td>
                   <td className="health-cell">
                     <div className="stat-change">
@@ -152,7 +146,7 @@ export const PlantStatusChanges: React.FC<PlantStatusChangesProps> = ({ classNam
                       </span>
                       {change.old_size !== change.new_size && (
                         <span className={`change-indicator ${(change.new_size === 'big' && change.old_size !== 'big') ||
-                            (change.new_size === 'medium' && change.old_size === 'small') ? 'size-up' : 'size-down'
+                          (change.new_size === 'medium' && change.old_size === 'small') ? 'size-up' : 'size-down'
                           }`}>
                           {(change.new_size === 'big' && change.old_size !== 'big') ||
                             (change.new_size === 'medium' && change.old_size === 'small') ? '📏↗️' : '📏↘️'}
@@ -194,6 +188,13 @@ export const PlantStatusChanges: React.FC<PlantStatusChangesProps> = ({ classNam
                           🚰 Durst gestillt
                         </span>
                       )}
+                    </div>
+                  </td>
+                  <td className="total-watered-cell">
+                    <div className="stat-change">
+                      <span className="stat-values">
+                        {change.new_total_water_count}
+                      </span>
                     </div>
                   </td>
                   <td className="watered-cell">
