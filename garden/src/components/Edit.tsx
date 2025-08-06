@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useGardenData } from '../hooks/useGardenData';
 import { GardenApiService } from '../services/gardenApi';
-import type { PlantConfig, ArealConfig, GardenData } from '../types/garden';
+import type { PlantConfig, ArealConfig } from '../types/garden';
 import { LoadingSpinner } from './LoadingSpinner';
 import { ErrorMessage } from './ErrorMessage';
 import './Edit.scss';
@@ -187,6 +187,7 @@ const Edit: React.FC = () => {
           return;
         }
       } catch (err) {
+        console.error('Error deleting plant:', err);
         showSaveMessage('error', 'Failed to delete plant');
         setIsSaving(false);
         return;
@@ -238,6 +239,7 @@ const Edit: React.FC = () => {
         showSaveMessage('error', result.error || 'Failed to delete area');
       }
     } catch (err) {
+      console.error('Error deleting area:', err);
       showSaveMessage('error', 'Failed to delete area');
     }
     setIsSaving(false);
@@ -309,6 +311,7 @@ const Edit: React.FC = () => {
         showSaveMessage('error', `${failed.length} operations failed. Please check and try again.`);
       }
     } catch (err) {
+      console.error('Error saving changes:', err);
       showSaveMessage('error', 'Failed to save changes. Please try again.');
     }
 
