@@ -82,7 +82,6 @@ jobs:
     
     - name: Stop docker compose services
       run: |
-        cd /Users/timosur/code/life-as-a-garden
         echo "Stopping docker compose services..."
         
         # Stop services gracefully
@@ -144,7 +143,6 @@ jobs:
     
     - name: Start docker compose services
       run: |
-        cd /Users/timosur/code/life-as-a-garden
         echo "Starting docker compose services..."
         
         # Start services
