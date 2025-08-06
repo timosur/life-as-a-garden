@@ -51,15 +51,15 @@ class PlantCreate(BaseModel):
 class ArealCreate(BaseModel):
     id: str
     name: str
-    horizontal_pos: float
-    vertical_pos: float
+    horizontal_pos: str
+    vertical_pos: str
     size: str
 
 
 class ArealUpdate(BaseModel):
     name: Optional[str] = None
-    horizontal_pos: Optional[float] = None
-    vertical_pos: Optional[float] = None
+    horizontal_pos: Optional[str] = None
+    vertical_pos: Optional[str] = None
     size: Optional[str] = None
 
 

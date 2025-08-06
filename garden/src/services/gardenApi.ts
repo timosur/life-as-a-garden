@@ -223,8 +223,8 @@ export const GardenApiService = {
     arealId: string,
     updates: Partial<{
       name: string;
-      horizontal_pos: number;
-      vertical_pos: number;
+      horizontal_pos: string;
+      vertical_pos: string;
       size: string;
     }>
   ): Promise<{ success: boolean; message?: string; error?: string }> {
@@ -253,8 +253,8 @@ export const GardenApiService = {
   async createAreal(arealData: {
     id: string;
     name: string;
-    horizontal_pos: number;
-    vertical_pos: number;
+    horizontal_pos: string;
+    vertical_pos: string;
     size: string;
   }): Promise<{ success: boolean; message?: string; error?: string }> {
     try {

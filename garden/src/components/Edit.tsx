@@ -143,21 +143,27 @@ const Edit: React.FC = () => {
     });
   };
 
-  const addPlant = (arealIndex: number) => {
-    const areal = editData[arealIndex];
-    const newPlant: EditablePlant = {
-      name: `New Plant ${areal.plants.length + 1}`,
-      health: 'healthy',
-      imagePath: '',
-      size: 'small',
-      position: '',
-      areal_id: areal.id,
-      id: undefined // Will be assigned by backend
-    };
+  const addPlant = (event: React.MouseEvent, arealIndex: number) => {
+    event.preventDefault();
+    event.stopPropagation();
 
     setEditData(prev => {
+      const areal = prev[arealIndex];
+      const newPlant: EditablePlant = {
+        name: `New Plant ${areal.plants.length + 1}`,
+        health: 'healthy',
+        imagePath: '',
+        size: 'small',
+        position: '',
+        areal_id: areal.id,
+        id: undefined // Will be assigned by backend
+      };
+
       const newData = [...prev];
-      newData[arealIndex].plants.push(newPlant);
+      newData[arealIndex] = {
+        ...areal,
+        plants: [...areal.plants, newPlant]
+      };
       return newData;
     });
   };
@@ -197,16 +203,18 @@ const Edit: React.FC = () => {
   };
 
   const addAreal = () => {
-    const newAreal: EditableAreal = {
-      id: `areal_${Date.now()}`,
-      name: `New Area ${editData.length + 1}`,
-      horizontalPos: 'left',
-      verticalPos: 'top',
-      size: 'medium',
-      plants: []
-    };
+    setEditData(prev => {
+      const newAreal: EditableAreal = {
+        id: `areal_${Date.now()}`,
+        name: `New Area ${prev.length + 1}`,
+        horizontalPos: 'left',
+        verticalPos: 'top',
+        size: 'medium',
+        plants: []
+      };
 
-    setEditData(prev => [...prev, newAreal]);
+      return [...prev, newAreal];
+    });
   };
 
   const removeAreal = async (arealIndex: number) => {
@@ -246,8 +254,8 @@ const Edit: React.FC = () => {
         // Update areal - convert position strings to numbers for API
         const arealUpdates = {
           name: areal.name,
-          horizontal_pos: areal.horizontalPos === 'left' ? 0 : 1, // Convert string to number
-          vertical_pos: areal.verticalPos === 'top' ? 0 : areal.verticalPos === 'middle' ? 1 : 2,
+          horizontal_pos: areal.horizontalPos,
+          vertical_pos: areal.verticalPos,
           size: areal.size
         };
 
@@ -401,7 +409,7 @@ const Edit: React.FC = () => {
                 <h3>Plants ({areal.plants.length})</h3>
                 <button
                   className="add-button small"
-                  onClick={() => addPlant(arealIndex)}
+                  onClick={(e) => addPlant(e, arealIndex)}
                   disabled={isSaving}
                 >
                   Add Plant
@@ -455,11 +463,22 @@ const Edit: React.FC = () => {
                       </div>
                       <div className="property-group">
                         <label>Position</label>
-                        <input
-                          type="text"
+                        <select
                           value={plant.position}
                           onChange={(e) => handlePlantChange(arealIndex, plantIndex, 'position', e.target.value)}
-                        />
+                        >
+                          <option value="">Select Position</option>
+                          <option value="center">Center</option>
+                          <option value="top">Top</option>
+                          <option value="bottom">Bottom</option>
+                          <option value="left">Left</option>
+                          <option value="right">Right</option>
+                          <option value="top-left">Top Left</option>
+                          <option value="top-right">Top Right</option>
+                          <option value="bottom-left">Bottom Left</option>
+                          <option value="bottom-right">Bottom Right</option>
+                          <option value="center-top-mid">Center Top Mid</option>
+                        </select>
                       </div>
                       <div className="property-group">
                         <label>Image Path</label>

@@ -43,6 +43,21 @@ jobs:
       run: |
         docker system prune -f
         
+    - name: Backup database
+      run: |
+        # Create backup of database with current date
+        DB_PATH="/var/lib/garden/db/garden.db"
+        BACKUP_DIR="/var/lib/garden/db"
+        DATE=$(date +%d%m%Y)
+        
+        if [ -f "$DB_PATH" ]; then
+          echo "Creating database backup..."
+          cp "$DB_PATH" "${BACKUP_DIR}/garden_backup_${DATE}.db"
+          echo "Database backup created: garden_backup_${DATE}.db"
+        else
+          echo "Database file not found at $DB_PATH, skipping backup"
+        fi
+        
     - name: Initialize Let's Encrypt certificates (first time only)
       run: |
         # Check if certificates already exist
