@@ -1,0 +1,205 @@
+name: Database Restore
+
+on:
+  workflow_dispatch:  # Manual triggering only for safety
+    inputs:
+      backup_file:
+        description: 'Specific backup file to restore (optional - defaults to latest)'
+        required: false
+        type: string
+      confirm_restore:
+        description: 'Type "CONFIRM" to proceed with restore'
+        required: true
+        type: string
+
+jobs:
+  restore:
+    runs-on: self-hosted
+    
+    steps:
+    - name: Validate confirmation
+      run: |
+        if [ "${{ github.event.inputs.confirm_restore }}" != "CONFIRM" ]; then
+          echo "ERROR: Restore not confirmed. Please type 'CONFIRM' to proceed."
+          exit 1
+        fi
+        echo "Restore confirmed, proceeding..."
+    
+    - name: Check backup availability
+      run: |
+        BACKUP_DIR="/var/lib/garden/backups"
+        
+        if [ ! -d "$BACKUP_DIR" ]; then
+          echo "ERROR: Backup directory not found at $BACKUP_DIR"
+          exit 1
+        fi
+        
+        if [ -n "${{ github.event.inputs.backup_file }}" ]; then
+          RESTORE_FILE="$BACKUP_DIR/${{ github.event.inputs.backup_file }}"
+          if [ ! -f "$RESTORE_FILE" ]; then
+            echo "ERROR: Specified backup file not found: ${{ github.event.inputs.backup_file }}"
+            echo "Available backups:"
+            ls -la "$BACKUP_DIR"/garden_backup_*.db 2>/dev/null || echo "No backups found"
+            exit 1
+          fi
+        else
+          RESTORE_FILE=$(ls -t "$BACKUP_DIR"/garden_backup_*.db 2>/dev/null | head -1)
+          if [ -z "$RESTORE_FILE" ]; then
+            echo "ERROR: No backup files found in $BACKUP_DIR"
+            exit 1
+          fi
+        fi
+        
+        echo "Will restore from: $(basename $RESTORE_FILE)"
+        echo "RESTORE_FILE=$RESTORE_FILE" >> $GITHUB_ENV
+        
+        # Verify backup integrity before proceeding
+        if command -v sqlite3 >/dev/null 2>&1; then
+          echo "Verifying backup integrity..."
+          if sqlite3 "$RESTORE_FILE" "PRAGMA integrity_check;" | grep -q "ok"; then
+            echo "Backup integrity check passed"
+          else
+            echo "ERROR: Backup integrity check failed"
+            exit 1
+          fi
+        else
+          echo "WARNING: SQLite3 not available, skipping integrity check"
+        fi
+    
+    - name: Create pre-restore backup
+      run: |
+        DB_PATH="/var/lib/garden/db/garden.db"
+        BACKUP_DIR="/var/lib/garden/backups"
+        TIMESTAMP=$(date +%Y%m%d_%H%M%S)
+        
+        if [ -f "$DB_PATH" ]; then
+          echo "Creating pre-restore backup..."
+          cp "$DB_PATH" "${BACKUP_DIR}/garden_pre_restore_${TIMESTAMP}.db"
+          echo "Pre-restore backup created: garden_pre_restore_${TIMESTAMP}.db"
+        else
+          echo "No existing database found to backup"
+        fi
+    
+    - name: Stop docker compose services
+      run: |
+        cd /Users/timosur/code/life-as-a-garden
+        echo "Stopping docker compose services..."
+        
+        # Stop services gracefully
+        docker compose down --timeout 30
+        
+        # Wait a moment for containers to fully stop
+        sleep 5
+        
+        # Verify all containers are stopped
+        if docker compose ps --quiet | grep -q .; then
+          echo "WARNING: Some containers are still running"
+          docker compose ps
+        else
+          echo "All services stopped successfully"
+        fi
+    
+    - name: Restore database
+      run: |
+        DB_PATH="/var/lib/garden/db/garden.db"
+        DB_DIR="/var/lib/garden/db"
+        TIMESTAMP=$(date '+%Y-%m-%d %H:%M:%S')
+        
+        echo "Starting database restore at $TIMESTAMP"
+        
+        # Ensure database directory exists
+        mkdir -p "$DB_DIR"
+        
+        # Remove existing database if it exists
+        if [ -f "$DB_PATH" ]; then
+          echo "Removing existing database..."
+          rm "$DB_PATH"
+        fi
+        
+        # Copy backup to database location
+        echo "Restoring database from: $(basename $RESTORE_FILE)"
+        cp "$RESTORE_FILE" "$DB_PATH"
+        
+        # Set appropriate permissions
+        chmod 644 "$DB_PATH"
+        
+        # Verify the restored database
+        if [ -f "$DB_PATH" ]; then
+          echo "Database restored successfully"
+          echo "Restored database size: $(du -h $DB_PATH | cut -f1)"
+          
+          # Additional integrity check on restored database
+          if command -v sqlite3 >/dev/null 2>&1; then
+            if sqlite3 "$DB_PATH" "PRAGMA integrity_check;" | grep -q "ok"; then
+              echo "Restored database integrity check passed"
+            else
+              echo "ERROR: Restored database integrity check failed"
+              exit 1
+            fi
+          fi
+        else
+          echo "ERROR: Database restore failed"
+          exit 1
+        fi
+    
+    - name: Start docker compose services
+      run: |
+        cd /Users/timosur/code/life-as-a-garden
+        echo "Starting docker compose services..."
+        
+        # Start services
+        docker compose up -d
+        
+        # Wait for services to start
+        echo "Waiting for services to start..."
+        sleep 30
+        
+        # Check service health
+        echo "Checking service status..."
+        docker compose ps
+        
+        # Wait for backend health check
+        echo "Waiting for backend to be healthy..."
+        timeout=300  # 5 minutes timeout
+        elapsed=0
+        while [ $elapsed -lt $timeout ]; do
+          if docker compose exec -T backend curl -f http://localhost:8000/api/health >/dev/null 2>&1; then
+            echo "Backend is healthy"
+            break
+          fi
+          echo "Waiting for backend to be ready... (${elapsed}s elapsed)"
+          sleep 10
+          elapsed=$((elapsed + 10))
+        done
+        
+        if [ $elapsed -ge $timeout ]; then
+          echo "WARNING: Backend health check timeout"
+          echo "Service logs:"
+          docker compose logs backend --tail 20
+        fi
+    
+    - name: Verify restore completion
+      run: |
+        BACKUP_DIR="/var/lib/garden/backups"
+        TIMESTAMP=$(date '+%Y-%m-%d %H:%M:%S')
+        
+        echo "Restore completed at $TIMESTAMP"
+        echo "Restored from: $(basename $RESTORE_FILE)"
+        
+        # Log the restore operation
+        echo "[$TIMESTAMP] Database restored from $(basename $RESTORE_FILE)" >> "$BACKUP_DIR/restore.log"
+        
+        # Keep only last 50 restore log entries
+        tail -50 "$BACKUP_DIR/restore.log" > "$BACKUP_DIR/restore.log.tmp" && mv "$BACKUP_DIR/restore.log.tmp" "$BACKUP_DIR/restore.log"
+        
+        # Show final status
+        echo "=== Restore Summary ==="
+        echo "Backup source: $(basename $RESTORE_FILE)"
+        echo "Database path: /var/lib/garden/db/garden.db"
+        echo "Database size: $(du -h /var/lib/garden/db/garden.db | cut -f1)"
+        echo "Services status:"
+        docker compose ps --format "table {{.Name}}\t{{.Status}}\t{{.Ports}}"
+        
+        echo ""
+        echo "🎉 Database restore completed successfully!"
+        echo "⚠️  Remember to verify your application is working correctly."
