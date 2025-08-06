@@ -1,0 +1,274 @@
+@use '../styles/variables' as *;
+@use '../styles/mixins' as *;
+
+.edit-container {
+  padding: $padding-large;
+  max-width: 1200px;
+  margin: 0 auto;
+  background: $color-bg-white;
+  min-height: 100vh;
+
+  .edit-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: $margin-xl;
+    padding-bottom: $padding-medium;
+    border-bottom: 2px solid $color-primary-light;
+
+    h1 {
+      color: $color-primary;
+      margin: 0;
+      font-size: $font-size-xl;
+    }
+
+    .edit-actions {
+      display: flex;
+      gap: $margin-medium;
+    }
+  }
+
+  .save-message {
+    padding: $padding-medium;
+    border-radius: $border-radius-medium;
+    margin-bottom: $margin-large;
+    font-weight: $font-weight-medium;
+
+    &.success {
+      background: $color-success-bg;
+      color: $color-success;
+      border: 1px solid $color-success;
+    }
+
+    &.error {
+      background: $color-danger-bg;
+      color: $color-danger;
+      border: 1px solid $color-danger;
+    }
+  }
+
+  .areals-list {
+    display: flex;
+    flex-direction: column;
+    gap: $margin-xl;
+  }
+
+  .edit-footer {
+    margin-top: $margin-xxl;
+    padding-top: $padding-large;
+    border-top: 1px solid $color-primary-light;
+
+    .disclaimer {
+      background: $color-info-bg;
+      color: $color-info;
+      padding: $padding-medium;
+      border-radius: $border-radius-medium;
+      border-left: 4px solid $color-info;
+      margin: 0;
+    }
+  }
+}
+
+.areal-editor {
+  background: $color-bg-light;
+  border-radius: $border-radius-large;
+  padding: $padding-large;
+  border: 2px solid $color-primary-light;
+
+  .areal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: $margin-large;
+
+    h2 {
+      color: $color-primary;
+      margin: 0;
+      font-size: $font-size-xl;
+    }
+  }
+
+  .areal-properties {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: $margin-medium;
+    margin-bottom: $margin-xl;
+    padding: $padding-medium;
+    background: $color-bg-white;
+    border-radius: $border-radius-medium;
+    border: 1px solid $color-primary-light;
+  }
+
+  .plants-section {
+    .plants-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: $margin-medium;
+
+      h3 {
+        margin: 0;
+        color: $color-text-secondary;
+        font-size: $font-size-large;
+      }
+    }
+
+    .plants-list {
+      display: flex;
+      flex-direction: column;
+      gap: $margin-medium;
+    }
+  }
+}
+
+.plant-editor {
+  background: $color-bg-white;
+  border-radius: $border-radius-medium;
+  padding: $padding-medium;
+  border: 1px solid $color-primary-light;
+  margin-left: $margin-large;
+
+  .plant-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: $margin-medium;
+
+    h4 {
+      margin: 0;
+      color: $color-text-primary;
+      font-size: $font-size-medium;
+    }
+  }
+
+  .plant-properties {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: $margin-small;
+  }
+}
+
+.property-group {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+
+  label {
+    font-weight: $font-weight-medium;
+    color: $color-text-secondary;
+    font-size: $font-size-small;
+  }
+
+  input,
+  select {
+    padding: 8px 12px;
+    border: 1px solid $color-primary-light;
+    border-radius: $border-radius-small;
+    font-size: $font-size-regular;
+    
+    &:focus {
+      outline: none;
+      border-color: $color-primary;
+      box-shadow: 0 0 0 2px rgba($color-primary, 0.2);
+    }
+  }
+
+  input[type="text"] {
+    font-family: $font-family-system;
+  }
+
+  select {
+    background: white;
+    cursor: pointer;
+  }
+}
+
+// Button Styles
+.save-button,
+.add-button,
+.remove-button {
+  padding: $padding-small $padding-medium;
+  border: none;
+  border-radius: $border-radius-medium;
+  font-weight: $font-weight-medium;
+  cursor: pointer;
+  transition: all 0.2s ease;
+
+  &:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+  }
+}
+
+.save-button {
+  background: $color-success;
+  color: white;
+
+  &:hover:not(:disabled) {
+    background: #1e7e34; // Darker version of success color
+  }
+}
+
+.add-button {
+  background: $color-primary;
+  color: white;
+
+  &:hover {
+    background: #1d472a; // Darker version of primary color
+  }
+
+  &.small {
+    padding: 6px 12px;
+    font-size: $font-size-small;
+  }
+}
+
+.remove-button {
+  background: $color-danger;
+  color: white;
+
+  &:hover {
+    background: #c82333; // Darker version of danger color
+  }
+
+  &.small {
+    padding: 4px 8px;
+    font-size: $font-size-small;
+  }
+}
+
+// Responsive Design
+@include mobile {
+  .edit-container {
+    padding: $padding-medium;
+
+    .edit-header {
+      flex-direction: column;
+      align-items: stretch;
+      gap: $margin-medium;
+
+      .edit-actions {
+        justify-content: center;
+      }
+    }
+
+    .areal-properties,
+    .plant-properties {
+      grid-template-columns: 1fr;
+    }
+
+    .plant-editor {
+      margin-left: 0;
+    }
+  }
+}
+
+@media (min-width: 768px) and (max-width: 1024px) {
+  .areal-properties {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .plant-properties {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}

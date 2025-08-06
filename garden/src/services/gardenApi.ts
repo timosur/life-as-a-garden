@@ -111,4 +111,192 @@ export const GardenApiService = {
       return { success: false, error: String(error) };
     }
   },
+
+  // Plant CRUD operations
+  async updatePlant(
+    plantId: number,
+    updates: Partial<{
+      name: string;
+      health: string;
+      size: string;
+      image_path: string;
+      position: string;
+    }>
+  ): Promise<{ success: boolean; message?: string; error?: string }> {
+    try {
+      const response = await fetch(`${API_BASE_URL}/api/garden/plants/${plantId}`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(updates),
+      });
+
+      const result = await response.json();
+
+      if (!response.ok) {
+        return { success: false, error: result.error || "Failed to update plant" };
+      }
+
+      return { success: true, message: result.message };
+    } catch (error) {
+      console.error("Error updating plant:", error);
+      return { success: false, error: String(error) };
+    }
+  },
+
+  async createPlant(plantData: {
+    areal_id: string;
+    name: string;
+    health?: string;
+    image_path?: string;
+    size?: string;
+    position?: string;
+    days_without_water?: number;
+    water_streak?: number;
+    total_water_count?: number;
+    growth_stage?: number;
+    last_watered?: string;
+  }): Promise<{
+    success: boolean;
+    message?: string;
+    error?: string;
+    plant?: {
+      id: number;
+      name: string;
+      health: string;
+      image_path: string;
+      size: string;
+      position: string;
+      areal_id: string;
+    };
+  }> {
+    try {
+      const response = await fetch(`${API_BASE_URL}/api/garden/plants`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(plantData),
+      });
+
+      const result = await response.json();
+
+      if (!response.ok) {
+        return { success: false, error: result.error || "Failed to create plant" };
+      }
+
+      return {
+        success: true,
+        message: result.message,
+        plant: result.plant,
+      };
+    } catch (error) {
+      console.error("Error creating plant:", error);
+      return { success: false, error: String(error) };
+    }
+  },
+
+  async deletePlant(
+    plantId: number
+  ): Promise<{ success: boolean; message?: string; error?: string }> {
+    try {
+      const response = await fetch(`${API_BASE_URL}/api/garden/plants/${plantId}`, {
+        method: "DELETE",
+      });
+
+      const result = await response.json();
+
+      if (!response.ok) {
+        return { success: false, error: result.error || "Failed to delete plant" };
+      }
+
+      return { success: true, message: result.message };
+    } catch (error) {
+      console.error("Error deleting plant:", error);
+      return { success: false, error: String(error) };
+    }
+  },
+
+  // Areal CRUD operations
+  async updateAreal(
+    arealId: string,
+    updates: Partial<{
+      name: string;
+      horizontal_pos: number;
+      vertical_pos: number;
+      size: string;
+    }>
+  ): Promise<{ success: boolean; message?: string; error?: string }> {
+    try {
+      const response = await fetch(`${API_BASE_URL}/api/garden/areals/${arealId}`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(updates),
+      });
+
+      const result = await response.json();
+
+      if (!response.ok) {
+        return { success: false, error: result.error || "Failed to update areal" };
+      }
+
+      return { success: true, message: result.message };
+    } catch (error) {
+      console.error("Error updating areal:", error);
+      return { success: false, error: String(error) };
+    }
+  },
+
+  async createAreal(arealData: {
+    id: string;
+    name: string;
+    horizontal_pos: number;
+    vertical_pos: number;
+    size: string;
+  }): Promise<{ success: boolean; message?: string; error?: string }> {
+    try {
+      const response = await fetch(`${API_BASE_URL}/api/garden/areals`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(arealData),
+      });
+
+      const result = await response.json();
+
+      if (!response.ok) {
+        return { success: false, error: result.error || "Failed to create areal" };
+      }
+
+      return { success: true, message: result.message };
+    } catch (error) {
+      console.error("Error creating areal:", error);
+      return { success: false, error: String(error) };
+    }
+  },
+
+  async deleteAreal(
+    arealId: string
+  ): Promise<{ success: boolean; message?: string; error?: string }> {
+    try {
+      const response = await fetch(`${API_BASE_URL}/api/garden/areals/${arealId}`, {
+        method: "DELETE",
+      });
+
+      const result = await response.json();
+
+      if (!response.ok) {
+        return { success: false, error: result.error || "Failed to delete areal" };
+      }
+
+      return { success: true, message: result.message };
+    } catch (error) {
+      console.error("Error deleting areal:", error);
+      return { success: false, error: String(error) };
+    }
+  },
 };

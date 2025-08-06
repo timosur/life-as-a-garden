@@ -1,7 +1,7 @@
 """Repository for managing plants in the garden database."""
 
 import sqlite3
-from typing import List, Dict, Any
+from typing import List, Dict, Any, Optional
 from ..base import DatabaseConnection
 
 
@@ -12,11 +12,13 @@ class PlantRepository:
         """Initialize with database connection."""
         self.db = db_connection
 
-    def insert_plant(self, areal_id: str, plant_data: Dict[str, Any]) -> bool:
-        """Insert a plant into the database."""
+    def insert_plant(
+        self, areal_id: str, plant_data: Dict[str, Any]
+    ) -> Optional[Dict[str, Any]]:
+        """Insert a plant into the database and return the created plant."""
         try:
             with self.db.get_connection() as conn:
-                conn.execute(
+                cursor = conn.execute(
                     """
                     INSERT INTO plants 
                     (areal_id, name, health, image_path, size, position, 
@@ -27,7 +29,7 @@ class PlantRepository:
                         areal_id,
                         plant_data["name"],
                         plant_data["health"],
-                        plant_data["imagePath"],
+                        plant_data.get("image_path", ""),
                         plant_data["size"],
                         plant_data["position"],
                         plant_data.get("days_without_water", 0),
@@ -37,10 +39,18 @@ class PlantRepository:
                         plant_data.get("last_watered", None),
                     ),
                 )
-                return True
+
+                # Get the created plant ID
+                plant_id = cursor.lastrowid
+
+                # Fetch and return the created plant
+                cursor = conn.execute("SELECT * FROM plants WHERE id = ?", (plant_id,))
+                result = cursor.fetchone()
+                return dict(result) if result else None
+
         except sqlite3.Error as e:
             print(f"Error inserting plant: {e}")
-            return False
+            return None
 
     def get_plants_by_areal(self, areal_id: str) -> List[Dict[str, Any]]:
         """Get all plants for a specific areal."""
@@ -111,6 +121,47 @@ class PlantRepository:
                 return cursor.rowcount > 0
         except sqlite3.Error as e:
             print(f"Error updating plant health: {e}")
+            return False
+
+    def update_plant(self, plant_id: int, plant_data: dict) -> bool:
+        """Update plant information with provided fields."""
+        try:
+            # Build dynamic update query based on provided fields
+            update_fields = []
+            values = []
+
+            # Define allowed fields mapping
+            field_mapping = {
+                "areal_id": "areal_id",
+                "name": "name",
+                "health": "health",
+                "image_path": "image_path",
+                "size": "size",
+                "position": "position",
+                "days_without_water": "days_without_water",
+                "water_streak": "water_streak",
+                "total_water_count": "total_water_count",
+                "growth_stage": "growth_stage",
+                "last_watered": "last_watered",
+            }
+
+            for field, value in plant_data.items():
+                if value is not None and field in field_mapping:
+                    update_fields.append(f"{field_mapping[field]} = ?")
+                    values.append(value)
+
+            if not update_fields:
+                return False
+
+            update_fields.append("updated_at = CURRENT_TIMESTAMP")
+            query = f"UPDATE plants SET {', '.join(update_fields)} WHERE id = ?"
+            values.append(plant_id)
+
+            with self.db.get_connection() as conn:
+                cursor = conn.execute(query, values)
+                return cursor.rowcount > 0
+        except sqlite3.Error as e:
+            print(f"Error updating plant: {e}")
             return False
 
     def update_plant_watering_stats(

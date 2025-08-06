@@ -57,3 +57,36 @@ class ArealRepository:
             cursor = conn.execute("SELECT * FROM areals WHERE id = ?", (areal_id,))
             row = cursor.fetchone()
             return dict(row) if row else None
+
+    def update_areal(self, areal_id: str, areal_data: dict) -> bool:
+        """Update areal information with provided fields."""
+        try:
+            # Build dynamic update query based on provided fields
+            update_fields = []
+            values = []
+
+            # Define allowed fields mapping
+            field_mapping = {
+                "name": "name",
+                "horizontal_pos": "horizontal_pos",
+                "vertical_pos": "vertical_pos",
+                "size": "size",
+            }
+
+            for field, value in areal_data.items():
+                if value is not None and field in field_mapping:
+                    update_fields.append(f"{field_mapping[field]} = ?")
+                    values.append(value)
+
+            if not update_fields:
+                return False
+
+            query = f"UPDATE areals SET {', '.join(update_fields)} WHERE id = ?"
+            values.append(areal_id)
+
+            with self.db.get_connection() as conn:
+                cursor = conn.execute(query, values)
+                return cursor.rowcount > 0
+        except sqlite3.Error as e:
+            print(f"Error updating areal: {e}")
+            return False

@@ -1,11 +1,5 @@
-#root {
-  max-width: 1280px;
-  margin: 0;
-  padding: 0;
-  text-align: center;
-}
+@use '../styles/variables' as *;
 
-/* Navigation Styles */
 .app-navigation {
   background: #2d3748;
   border-bottom: 2px solid #4a5568;
@@ -13,6 +7,7 @@
   position: sticky;
   top: 0;
   z-index: 100;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
 .nav-container {
@@ -50,20 +45,20 @@
   font-weight: 500;
   transition: all 0.2s ease;
   cursor: pointer;
+
+  &:hover {
+    background: #718096;
+    transform: translateY(-1px);
+  }
+
+  &.active {
+    background: #38a169;
+    border-color: #38a169;
+    color: white;
+  }
 }
 
-.nav-button:hover {
-  background: #718096;
-  transform: translateY(-1px);
-}
-
-.nav-button.active {
-  background: #38a169;
-  border-color: #38a169;
-  color: white;
-}
-
-/* Mobile Responsive */
+// Mobile Responsive
 @media (max-width: 768px) {
   .nav-container {
     flex-direction: column;

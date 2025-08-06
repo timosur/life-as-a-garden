@@ -26,6 +26,43 @@ class DownloadRequest(BaseModel):
     local_path: Optional[str] = None
 
 
+class PlantUpdate(BaseModel):
+    name: Optional[str] = None
+    health: Optional[str] = None
+    size: Optional[str] = None
+    image_path: Optional[str] = None
+    position: Optional[str] = None
+
+
+class PlantCreate(BaseModel):
+    areal_id: str
+    name: str
+    health: str = "healthy"
+    image_path: str = ""
+    size: str = "small"
+    position: str = ""
+    days_without_water: int = 0
+    water_streak: int = 1
+    total_water_count: int = 20
+    growth_stage: int = 5
+    last_watered: Optional[str] = None
+
+
+class ArealCreate(BaseModel):
+    id: str
+    name: str
+    horizontal_pos: float
+    vertical_pos: float
+    size: str
+
+
+class ArealUpdate(BaseModel):
+    name: Optional[str] = None
+    horizontal_pos: Optional[float] = None
+    vertical_pos: Optional[float] = None
+    size: Optional[str] = None
+
+
 app = FastAPI(
     title="Life as a Garden API",
     version="1.0.0",
@@ -96,6 +133,150 @@ def update_plant_health(plant_id: int, health: str):
         return {"message": f"Plant {plant_id} health updated to {health}"}
     else:
         return {"error": f"Failed to update plant {plant_id}"}
+
+
+@app.get("/api/garden/plants")
+def get_all_plants():
+    """Get all plants with their complete information"""
+    return garden_db.get_all_plants()
+
+
+@app.put("/api/garden/plants/{plant_id}")
+def update_plant(plant_id: int, plant_data: PlantUpdate):
+    """Update plant information (all supported fields)"""
+    try:
+        # Convert Pydantic model to dict and filter None values
+        update_data = {
+            k: v for k, v in plant_data.model_dump().items() if v is not None
+        }
+
+        if not update_data:
+            return {"error": "No fields provided for update"}
+
+        success = garden_db.update_plant(plant_id, update_data)
+        if success:
+            return {"message": f"Plant {plant_id} updated successfully"}
+        else:
+            return {"error": f"Failed to update plant {plant_id} - plant may not exist"}
+    except Exception as e:
+        return {"error": f"Failed to update plant: {str(e)}"}
+
+
+@app.post("/api/garden/plants")
+def create_plant(plant_data: PlantCreate):
+    """Create a new plant"""
+    try:
+        # Convert Pydantic model to dict
+        plant_dict = plant_data.model_dump()
+        areal_id = plant_dict.pop("areal_id")
+
+        created_plant = garden_db.insert_plant(areal_id, plant_dict)
+        if created_plant:
+            return {
+                "message": f"Plant '{plant_data.name}' created successfully",
+                "plant": created_plant,
+            }
+        else:
+            return {"error": f"Failed to create plant '{plant_data.name}'"}
+    except Exception as e:
+        return {"error": f"Failed to create plant: {str(e)}"}
+
+
+@app.delete("/api/garden/plants/{plant_id}")
+def delete_plant(plant_id: int):
+    """Delete a plant"""
+    try:
+        success = garden_db.delete_plant(plant_id)
+        if success:
+            return {"message": f"Plant {plant_id} deleted successfully"}
+        else:
+            return {"error": f"Failed to delete plant {plant_id} - plant may not exist"}
+    except Exception as e:
+        return {"error": f"Failed to delete plant: {str(e)}"}
+
+
+@app.get("/api/garden/plants/{plant_id}")
+def get_plant_by_id(plant_id: int):
+    """Get a specific plant by ID"""
+    try:
+        plant = garden_db.get_plant_by_id(plant_id)
+        if plant:
+            return plant
+        else:
+            return {"error": f"Plant {plant_id} not found"}
+    except Exception as e:
+        return {"error": f"Failed to get plant: {str(e)}"}
+
+
+@app.post("/api/garden/areals")
+def create_areal(areal_data: ArealCreate):
+    """Create a new areal"""
+    try:
+        # Convert Pydantic model to dict
+        areal_dict = {
+            "id": areal_data.id,
+            "name": areal_data.name,
+            "horizontalPos": areal_data.horizontal_pos,
+            "verticalPos": areal_data.vertical_pos,
+            "size": areal_data.size,
+        }
+
+        success = garden_db.insert_areal(areal_dict)
+        if success:
+            return {"message": f"Areal '{areal_data.name}' created successfully"}
+        else:
+            return {"error": f"Failed to create areal '{areal_data.name}'"}
+    except Exception as e:
+        return {"error": f"Failed to create areal: {str(e)}"}
+
+
+@app.put("/api/garden/areals/{areal_id}")
+def update_areal(areal_id: str, areal_data: ArealUpdate):
+    """Update areal information"""
+    try:
+        # Convert Pydantic model to dict and filter None values
+        update_data = {
+            k: v for k, v in areal_data.model_dump().items() if v is not None
+        }
+
+        if not update_data:
+            return {"error": "No fields provided for update"}
+
+        success = garden_db.update_areal(areal_id, update_data)
+        if success:
+            return {"message": f"Areal {areal_id} updated successfully"}
+        else:
+            return {"error": f"Failed to update areal {areal_id} - areal may not exist"}
+    except Exception as e:
+        return {"error": f"Failed to update areal: {str(e)}"}
+
+
+@app.delete("/api/garden/areals/{areal_id}")
+def delete_areal(areal_id: str):
+    """Delete an areal and all its plants"""
+    try:
+        success = garden_db.delete_areal(areal_id)
+        if success:
+            return {
+                "message": f"Areal {areal_id} and all its plants deleted successfully"
+            }
+        else:
+            return {"error": f"Failed to delete areal {areal_id} - areal may not exist"}
+    except Exception as e:
+        return {"error": f"Failed to delete areal: {str(e)}"}
+
+
+@app.get("/api/garden/areals/{areal_id}")
+def get_areal_by_id(areal_id: str):
+    """Get a specific areal by ID"""
+    try:
+        areal = garden_db.get_areal_by_id(areal_id)
+        if areal:
+            return areal
+        else:
+            return {"error": f"Areal {areal_id} not found"}
+    except Exception as e:
+        return {"error": f"Failed to get areal: {str(e)}"}
 
 
 @app.get("/api/garden/print")

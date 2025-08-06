@@ -1,6 +1,6 @@
 """Main garden service for handling garden data operations."""
 
-from typing import List, Dict, Any
+from typing import List, Dict, Any, Optional
 from ..base import DatabaseConnection
 from ..repositories import ArealRepository, PlantRepository, WateringRepository
 from .watering import WateringService
@@ -71,8 +71,10 @@ class GardenService:
         """Insert an areal into the database."""
         return self.areal_repo.insert_areal(areal_data)
 
-    def insert_plant(self, areal_id: str, plant_data: Dict[str, Any]) -> bool:
-        """Insert a plant into the database."""
+    def insert_plant(
+        self, areal_id: str, plant_data: Dict[str, Any]
+    ) -> Optional[Dict[str, Any]]:
+        """Insert a plant into the database and return the created plant."""
         return self.plant_repo.insert_plant(areal_id, plant_data)
 
     def get_all_areals(self) -> List[Dict[str, Any]]:
@@ -98,6 +100,22 @@ class GardenService:
     def update_plant_health(self, plant_id: int, health: str) -> bool:
         """Update the health status of a plant."""
         return self.plant_repo.update_plant_health(plant_id, health)
+
+    def update_plant(self, plant_id: int, plant_data: dict) -> bool:
+        """Update plant information with provided fields."""
+        return self.plant_repo.update_plant(plant_id, plant_data)
+
+    def get_plant_by_id(self, plant_id: int) -> Dict[str, Any] | None:
+        """Get a plant by ID."""
+        return self.plant_repo.get_plant_by_id(plant_id)
+
+    def get_areal_by_id(self, areal_id: str) -> Dict[str, Any] | None:
+        """Get an areal by ID."""
+        return self.areal_repo.get_areal_by_id(areal_id)
+
+    def update_areal(self, areal_id: str, areal_data: dict) -> bool:
+        """Update areal information with provided fields."""
+        return self.areal_repo.update_areal(areal_id, areal_data)
 
     def delete_plant(self, plant_id: int) -> bool:
         """Delete a plant from the database."""
