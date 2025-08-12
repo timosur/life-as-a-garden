@@ -36,6 +36,7 @@ class GardenService:
 
             for plant in plants:
                 plant_data = {
+                    "id": plant["id"],
                     "name": plant["name"],
                     "health": plant["health"],
                     "imagePath": plant["image_path"],

@@ -6,16 +6,6 @@ import { LoadingSpinner } from './LoadingSpinner';
 import { ErrorMessage } from './ErrorMessage';
 import './Edit.scss';
 
-interface ApiPlant {
-  id: number;
-  name: string;
-  health: string;
-  image_path: string;
-  size: string;
-  position: string;
-  areal_id: string;
-}
-
 interface EditablePlant extends PlantConfig {
   id?: number;
   areal_id?: string;
@@ -35,42 +25,23 @@ const Edit: React.FC = () => {
   const [saveMessage, setSaveMessage] = useState<SaveMessage | null>(null);
   const [isSaving, setIsSaving] = useState(false);
   const [editData, setEditData] = useState<EditableAreal[]>([]);
-  const [allPlants, setAllPlants] = useState<ApiPlant[]>([]);
-
-  // Fetch all plants with their IDs from the API
-  useEffect(() => {
-    const fetchPlantsWithIds = async () => {
-      try {
-        const response = await fetch('http://localhost:8000/api/garden/plants');
-        if (response.ok) {
-          const plants = await response.json();
-          setAllPlants(plants);
-        }
-      } catch (err) {
-        console.error('Error fetching plants with IDs:', err);
-      }
-    };
-
-    fetchPlantsWithIds();
-  }, []);
 
   // Initialize edit data when garden data loads
   useEffect(() => {
-    if (gardenConfig?.areals && allPlants.length > 0) {
-      // Convert garden data to editable format with real IDs from API
+    if (gardenConfig?.areals) {
+      // Convert garden data to editable format - plants already include IDs from /garden endpoint
       const editableAreals: EditableAreal[] = gardenConfig.areals.map(areal => {
-        // Find plants for this areal from the API data
-        const arealPlants = allPlants
-          .filter(plant => plant.areal_id === areal.id)
-          .map(plant => ({
-            id: plant.id,
-            name: plant.name,
-            health: plant.health as "healthy" | "okay" | "dead",
-            imagePath: plant.image_path || '',
-            size: plant.size as "small" | "medium" | "big",
-            position: plant.position || '',
-            areal_id: plant.areal_id
-          }));
+        // Convert plants to editable format - plants from /garden should have IDs
+        const arealPlants: EditablePlant[] = areal.plants.map((plant, index) => ({
+          // Type assertion since we know /garden endpoint includes IDs
+          id: (plant as EditablePlant).id || -(index + 1), // Use negative IDs for new plants
+          name: plant.name,
+          health: plant.health as "healthy" | "okay" | "dead",
+          imagePath: plant.imagePath || '',
+          size: plant.size as "small" | "medium" | "big",
+          position: plant.position || '',
+          areal_id: areal.id
+        }));
 
         return {
           ...areal,
@@ -79,37 +50,31 @@ const Edit: React.FC = () => {
       });
       setEditData(editableAreals);
     }
-  }, [gardenConfig, allPlants]);
+  }, [gardenConfig]);
 
   const refetchData = async () => {
     try {
-      const response = await fetch('http://localhost:8000/api/garden/plants');
-      if (response.ok) {
-        const plants = await response.json();
-        setAllPlants(plants);
+      const data = await GardenApiService.getGardenData();
+      if (data?.areals) {
+        // Update editData with fresh data from backend
+        const editableAreals: EditableAreal[] = data.areals.map(areal => {
+          const arealPlants: EditablePlant[] = areal.plants.map((plant, index) => ({
+            // Plants from /garden endpoint should have IDs, but handle missing ones
+            id: (plant as EditablePlant).id || -(index + 1),
+            name: plant.name,
+            health: plant.health as "healthy" | "okay" | "dead",
+            imagePath: plant.imagePath || '',
+            size: plant.size as "small" | "medium" | "big",
+            position: plant.position || '',
+            areal_id: areal.id
+          }));
 
-        // Also update editData to reflect the new plants
-        if (gardenConfig?.areals) {
-          const editableAreals: EditableAreal[] = gardenConfig.areals.map(areal => {
-            const arealPlants = plants
-              .filter((plant: ApiPlant) => plant.areal_id === areal.id)
-              .map((plant: ApiPlant) => ({
-                id: plant.id,
-                name: plant.name,
-                health: plant.health as "healthy" | "okay" | "dead",
-                imagePath: plant.image_path || '',
-                size: plant.size as "small" | "medium" | "big",
-                position: plant.position || '',
-                areal_id: plant.areal_id
-              }));
-
-            return {
-              ...areal,
-              plants: arealPlants
-            };
-          });
-          setEditData(editableAreals);
-        }
+          return {
+            ...areal,
+            plants: arealPlants
+          };
+        });
+        setEditData(editableAreals);
       }
     } catch (err) {
       console.error('Error refetching data:', err);
@@ -179,8 +144,6 @@ const Edit: React.FC = () => {
         if (result.success) {
           showSaveMessage('success', result.message || 'Plant deleted successfully');
           await refetchData(); // Refresh data
-          // Update allPlants state
-          setAllPlants(prev => prev.filter(p => p.id !== plant.id));
         } else {
           showSaveMessage('error', result.error || 'Failed to delete plant');
           setIsSaving(false);
@@ -194,13 +157,6 @@ const Edit: React.FC = () => {
       }
       setIsSaving(false);
     }
-
-    // Remove from local state
-    setEditData(prev => {
-      const newData = [...prev];
-      newData[arealIndex].plants.splice(plantIndex, 1);
-      return newData;
-    });
   };
 
   const addAreal = () => {
@@ -227,14 +183,6 @@ const Edit: React.FC = () => {
       if (result.success) {
         showSaveMessage('success', result.message || 'Area deleted successfully');
         await refetchData(); // Refresh data
-        // Remove from local state
-        setEditData(prev => {
-          const newData = [...prev];
-          newData.splice(arealIndex, 1);
-          return newData;
-        });
-        // Update allPlants state to remove plants from this areal
-        setAllPlants(prev => prev.filter(p => p.areal_id !== areal.id));
       } else {
         showSaveMessage('error', result.error || 'Failed to delete area');
       }
