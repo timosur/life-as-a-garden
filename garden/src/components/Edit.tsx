@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useGardenData } from '../hooks/useGardenData';
 import { GardenApiService } from '../services/gardenApi';
-import type { PlantConfig, ArealConfig } from '../types/garden';
+import type { PlantConfig, ArealConfig, Note } from '../types/garden';
 import { LoadingSpinner } from './LoadingSpinner';
 import { ErrorMessage } from './ErrorMessage';
 import './Edit.scss';
@@ -25,6 +25,13 @@ const Edit: React.FC = () => {
   const [saveMessage, setSaveMessage] = useState<SaveMessage | null>(null);
   const [isSaving, setIsSaving] = useState(false);
   const [editData, setEditData] = useState<EditableAreal[]>([]);
+
+  // Notes state
+  const [notes, setNotes] = useState<Note[]>([]);
+  const [selectedNoteId, setSelectedNoteId] = useState<number | null>(null);
+  const [selectedNote, setSelectedNote] = useState<Note | null>(null);
+  const [noteContent, setNoteContent] = useState<string>('');
+  const [notesLoading, setNotesLoading] = useState(false);
 
   // Initialize edit data when garden data loads
   useEffect(() => {
@@ -51,6 +58,38 @@ const Edit: React.FC = () => {
       setEditData(editableAreals);
     }
   }, [gardenConfig]);
+
+  // Fetch all notes on component mount
+  useEffect(() => {
+    const fetchNotes = async () => {
+      setNotesLoading(true);
+      try {
+        const response = await GardenApiService.getAllNotes();
+        if (response?.success && response.notes) {
+          setNotes(response.notes);
+        }
+      } catch (err) {
+        console.error('Error fetching notes:', err);
+      }
+      setNotesLoading(false);
+    };
+
+    fetchNotes();
+  }, []);
+
+  // Handle note selection
+  useEffect(() => {
+    if (selectedNoteId && notes.length > 0) {
+      const note = notes.find(n => n.id === selectedNoteId);
+      if (note) {
+        setSelectedNote(note);
+        setNoteContent(note.content);
+      }
+    } else {
+      setSelectedNote(null);
+      setNoteContent('');
+    }
+  }, [selectedNoteId, notes]);
 
   const refetchData = async () => {
     try {
@@ -79,6 +118,37 @@ const Edit: React.FC = () => {
     } catch (err) {
       console.error('Error refetching data:', err);
     }
+  };
+
+  const saveNote = async () => {
+    if (!selectedNote) return;
+
+    setIsSaving(true);
+    try {
+      const result = await GardenApiService.updateNote(selectedNote.id, noteContent);
+      if (result.success) {
+        showSaveMessage('success', 'Note saved successfully!');
+
+        // Update the note in local state
+        setNotes(prev => prev.map(note =>
+          note.id === selectedNote.id
+            ? { ...note, content: noteContent, updated_at: new Date().toISOString() }
+            : note
+        ));
+
+        // Update selectedNote as well
+        setSelectedNote(prev => prev
+          ? { ...prev, content: noteContent, updated_at: new Date().toISOString() }
+          : null
+        );
+      } else {
+        showSaveMessage('error', result.error || 'Failed to save note');
+      }
+    } catch (err) {
+      console.error('Error saving note:', err);
+      showSaveMessage('error', 'Failed to save note. Please try again.');
+    }
+    setIsSaving(false);
   };
 
   const showSaveMessage = (type: 'success' | 'error', message: string) => {
@@ -453,6 +523,75 @@ const Edit: React.FC = () => {
           Complete editing interface with full CRUD functionality. You can add, edit, and remove plants and areas.
           Changes are automatically synced with the backend database.
         </p>
+      </div>
+
+      {/* Notes Editing Section */}
+      <div className="notes-editing-section">
+        <div className="notes-header">
+          <h2>Edit Notes</h2>
+          {selectedNote && (
+            <button
+              className="save-button"
+              onClick={saveNote}
+              disabled={isSaving || !noteContent.trim()}
+            >
+              {isSaving ? 'Saving...' : 'Save Note'}
+            </button>
+          )}
+        </div>
+
+        <div className="notes-controls">
+          <div className="property-group">
+            <label>Select Note by Date</label>
+            <select
+              value={selectedNoteId || ''}
+              onChange={(e) => setSelectedNoteId(e.target.value ? Number(e.target.value) : null)}
+              disabled={notesLoading}
+            >
+              <option value="">Select a note...</option>
+              {notes.map((note) => (
+                <option key={note.id} value={note.id}>
+                  {note.extracted_at} (ID: {note.id})
+                </option>
+              ))}
+            </select>
+          </div>
+        </div>
+
+        {notesLoading && (
+          <div className="notes-loading">
+            <LoadingSpinner />
+            <p>Loading notes...</p>
+          </div>
+        )}
+
+        {selectedNote && (
+          <div className="note-editor">
+            <div className="note-info">
+              <p><strong>Date:</strong> {selectedNote.extracted_at}</p>
+              <p><strong>Created:</strong> {new Date(selectedNote.created_at).toLocaleString()}</p>
+              <p><strong>Updated:</strong> {new Date(selectedNote.updated_at).toLocaleString()}</p>
+            </div>
+
+            <div className="note-content-editor">
+              <label>Note Content</label>
+              <textarea
+                value={noteContent}
+                onChange={(e) => setNoteContent(e.target.value)}
+                disabled={isSaving}
+                rows={15}
+                placeholder="Enter note content..."
+              />
+              <p className="character-count">{noteContent.length} characters</p>
+            </div>
+          </div>
+        )}
+
+        {!notesLoading && notes.length === 0 && (
+          <div className="no-notes">
+            <p>No notes found. Notes will appear here once they are created in the system.</p>
+          </div>
+        )}
       </div>
     </div>
   );

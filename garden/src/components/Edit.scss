@@ -275,3 +275,143 @@
     grid-template-columns: repeat(2, 1fr);
   }
 }
+
+// Notes editing section styles
+.notes-editing-section {
+  margin-top: $margin-xl;
+  padding-top: $padding-xl;
+  border-top: 2px solid $color-primary-light;
+
+  .notes-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: $margin-large;
+
+    h2 {
+      color: $color-primary;
+      margin: 0;
+      font-size: $font-size-large;
+    }
+  }
+
+  .notes-controls {
+    margin-bottom: $margin-large;
+
+    .property-group {
+      max-width: 400px;
+
+      select {
+        width: 100%;
+      }
+    }
+  }
+
+  .notes-loading {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: $padding-xl;
+    color: $color-text-muted;
+
+    p {
+      margin-top: $margin-medium;
+      font-style: italic;
+    }
+  }
+
+  .note-editor {
+    background: $color-bg-light;
+    border: 1px solid $color-bg-border;
+    border-radius: $border-radius-medium;
+    padding: $padding-large;
+
+    .note-info {
+      margin-bottom: $margin-large;
+      padding: $padding-medium;
+      background: rgba($color-primary-light, 0.1);
+      border-radius: $border-radius-small;
+
+      p {
+        margin: $margin-small 0;
+        color: $color-text-secondary;
+        font-size: $font-size-small;
+
+        strong {
+          color: $color-primary;
+        }
+      }
+    }
+
+    .note-content-editor {
+      label {
+        display: block;
+        margin-bottom: $margin-small;
+        font-weight: $font-weight-medium;
+        color: $color-primary;
+      }
+
+      textarea {
+        width: 100%;
+        min-height: 300px;
+        padding: $padding-medium;
+        border: 1px solid $color-bg-border;
+        border-radius: $border-radius-small;
+        font-family: 'Courier New', monospace;
+        font-size: $font-size-small;
+        line-height: 1.5;
+        resize: vertical;
+
+        &:focus {
+          outline: none;
+          border-color: $color-primary;
+          box-shadow: 0 0 0 2px rgba($color-primary, 0.2);
+        }
+
+        &:disabled {
+          background-color: $color-bg-light;
+          cursor: not-allowed;
+        }
+      }
+
+      .character-count {
+        text-align: right;
+        margin-top: $margin-small;
+        font-size: $font-size-small;
+        color: $color-text-muted;
+        font-style: italic;
+      }
+    }
+  }
+
+  .no-notes {
+    text-align: center;
+    padding: $padding-xl;
+    color: $color-text-muted;
+
+    p {
+      font-style: italic;
+      margin: 0;
+    }
+  }
+}
+
+// Responsive adjustments for notes section
+@media (max-width: 768px) {
+  .notes-editing-section {
+    .notes-header {
+      flex-direction: column;
+      gap: $margin-medium;
+      align-items: stretch;
+
+      .edit-actions {
+        justify-content: center;
+      }
+    }
+
+    .note-content-editor textarea {
+      min-height: 250px;
+    }
+  }
+}

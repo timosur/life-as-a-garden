@@ -112,6 +112,28 @@ export const GardenApiService = {
     }
   },
 
+  async updateNote(
+    noteId: number,
+    content: string
+  ): Promise<{ success: boolean; message?: string; error?: string }> {
+    try {
+      const response = await fetch(`${API_BASE_URL}/api/notes/${noteId}`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ content }),
+      });
+      if (!response.ok) {
+        throw new Error("Failed to update note");
+      }
+      return await response.json();
+    } catch (error) {
+      console.error("Error updating note:", error);
+      return { success: false, error: String(error) };
+    }
+  },
+
   // Plant CRUD operations
   async updatePlant(
     plantId: number,
