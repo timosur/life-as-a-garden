@@ -672,10 +672,10 @@ def delete_note(note_id: int):
 def update_note(note_id: int, note_data: dict):
     """Update a specific note's content."""
     try:
-        content = note_data.get('content', '').strip()
+        content = note_data.get("content", "").strip()
         if not content:
             return {"success": False, "error": "Content cannot be empty"}
-        
+
         success = garden_db.update_note(note_id, content)
         if success:
             return {"success": True, "message": f"Note {note_id} updated successfully"}
