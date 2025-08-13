@@ -325,6 +325,12 @@
       margin: 0;
       font-size: $font-size-large;
     }
+
+    .notes-actions {
+      display: flex;
+      gap: $margin-medium;
+      align-items: center;
+    }
   }
 
   .notes-controls {

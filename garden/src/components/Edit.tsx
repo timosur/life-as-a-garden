@@ -39,6 +39,7 @@ const Edit: React.FC = () => {
   const [saveMessage, setSaveMessage] = useState<SaveMessage | null>(null);
   const [isSaving, setIsSaving] = useState(false);
   const [editData, setEditData] = useState<EditableAreal[]>([]);
+  const [originalData, setOriginalData] = useState<EditableAreal[]>([]);
 
   // Notes state
   const [notes, setNotes] = useState<Note[]>([]);
@@ -78,6 +79,8 @@ const Edit: React.FC = () => {
         };
       });
       setEditData(editableAreals);
+      // Store original data for comparison
+      setOriginalData(JSON.parse(JSON.stringify(editableAreals))); // Deep copy
     }
   }, [gardenConfig]);
 
@@ -144,6 +147,8 @@ const Edit: React.FC = () => {
           };
         });
         setEditData(editableAreals);
+        // Update original data after successful refetch
+        setOriginalData(JSON.parse(JSON.stringify(editableAreals))); // Deep copy
       }
     } catch (err) {
       console.error('Error refetching data:', err);
@@ -181,9 +186,63 @@ const Edit: React.FC = () => {
     setIsSaving(false);
   };
 
+  const deleteNote = async () => {
+    if (!selectedNote) return;
+
+    // Confirm deletion
+    if (!window.confirm(`Are you sure you want to delete the note from ${selectedNote.extracted_at}? This action cannot be undone.`)) {
+      return;
+    }
+
+    setIsSaving(true);
+    try {
+      const result = await GardenApiService.deleteNote(selectedNote.id);
+      if (result.success) {
+        showSaveMessage('success', 'Note deleted successfully!');
+
+        // Remove the note from local state
+        setNotes(prev => prev.filter(note => note.id !== selectedNote.id));
+
+        // Clear selected note
+        setSelectedNote(null);
+        setSelectedNoteId(null);
+        setNoteContent('');
+      } else {
+        showSaveMessage('error', result.error || 'Failed to delete note');
+      }
+    } catch (err) {
+      console.error('Error deleting note:', err);
+      showSaveMessage('error', 'Failed to delete note. Please try again.');
+    }
+    setIsSaving(false);
+  };
+
   const showSaveMessage = (type: 'success' | 'error', message: string) => {
     setSaveMessage({ type, message });
     setTimeout(() => setSaveMessage(null), 5000);
+  };
+
+  // Helper function to compare areal objects (excluding plants)
+  const areAreasEqual = (areal1: EditableAreal, areal2: EditableAreal) => {
+    return areal1.name === areal2.name &&
+      areal1.horizontalPos === areal2.horizontalPos &&
+      areal1.verticalPos === areal2.verticalPos &&
+      areal1.size === areal2.size;
+  };
+
+  // Helper function to compare plant objects
+  const arePlantsEqual = (plant1: EditablePlant, plant2: EditablePlant) => {
+    return plant1.name === plant2.name &&
+      plant1.health === plant2.health &&
+      plant1.imagePath === plant2.imagePath &&
+      plant1.size === plant2.size &&
+      plant1.position === plant2.position &&
+      plant1.growth_stage === plant2.growth_stage &&
+      plant1.last_watered === plant2.last_watered &&
+      plant1.days_without_water === plant2.days_without_water &&
+      plant1.water_streak === plant2.water_streak &&
+      plant1.total_water_count === plant2.total_water_count &&
+      plant1.areal_id === plant2.areal_id;
   };
 
   const handlePlantChange = (arealIndex: number, plantIndex: number, field: keyof EditablePlant, value: string | number) => {
@@ -324,75 +383,114 @@ const Edit: React.FC = () => {
 
     try {
       const savePromises: Promise<{ success: boolean; message?: string; error?: string }>[] = [];
+      let changesCount = 0;
 
-      // Save all areals and plants
-      for (const areal of editData) {
-        // Update areal - convert position strings to numbers for API
-        const arealUpdates = {
-          name: areal.name,
-          horizontal_pos: areal.horizontalPos,
-          vertical_pos: areal.verticalPos,
-          size: areal.size
-        };
+      // Process each current areal
+      for (const currentAreal of editData) {
+        const originalAreal = originalData.find(a => a.id === currentAreal.id);
 
-        // Check if areal exists in original data
-        const originalAreal = gardenConfig?.areals.find(a => a.id === areal.id);
         if (originalAreal) {
-          // Update existing areal
-          savePromises.push(GardenApiService.updateAreal(areal.id, arealUpdates));
+          // Check if areal properties have changed
+          if (!areAreasEqual(currentAreal, originalAreal)) {
+            const arealUpdates = {
+              name: currentAreal.name,
+              horizontal_pos: currentAreal.horizontalPos,
+              vertical_pos: currentAreal.verticalPos,
+              size: currentAreal.size
+            };
+            savePromises.push(GardenApiService.updateAreal(currentAreal.id, arealUpdates));
+            changesCount++;
+          }
         } else {
-          // Create new areal
+          // New areal - always save
+          const arealUpdates = {
+            name: currentAreal.name,
+            horizontal_pos: currentAreal.horizontalPos,
+            vertical_pos: currentAreal.verticalPos,
+            size: currentAreal.size
+          };
           savePromises.push(GardenApiService.createAreal({
-            id: areal.id,
+            id: currentAreal.id,
             ...arealUpdates
           }));
+          changesCount++;
         }
 
-        // Save plants
-        for (const plant of areal.plants) {
+        // Process plants in this areal
+        for (const currentPlant of currentAreal.plants) {
+          let originalPlant: EditablePlant | undefined;
+
+          // Find original plant by ID across all areals
+          if (currentPlant.id && currentPlant.id > 0) {
+            for (const origAreal of originalData) {
+              originalPlant = origAreal.plants.find(p => p.id === currentPlant.id);
+              if (originalPlant) break;
+            }
+          }
+
           const plantData = {
-            areal_id: areal.id,
-            name: plant.name,
-            health: plant.health,
-            image_path: plant.imagePath,
-            size: plant.size,
-            position: plant.position,
-            growth_stage: plant.growth_stage || 1,
-            last_watered: plant.last_watered || undefined, // Use undefined instead of empty string
-            days_without_water: plant.days_without_water || 0,
-            water_streak: plant.water_streak || 0,
-            total_water_count: plant.total_water_count || 0,
+            areal_id: currentAreal.id,
+            name: currentPlant.name,
+            health: currentPlant.health,
+            image_path: currentPlant.imagePath,
+            size: currentPlant.size,
+            position: currentPlant.position,
+            growth_stage: currentPlant.growth_stage || 1,
+            last_watered: currentPlant.last_watered || undefined,
+            days_without_water: currentPlant.days_without_water || 0,
+            water_streak: currentPlant.water_streak || 0,
+            total_water_count: currentPlant.total_water_count || 0,
           };
 
-          if (plant.id && plant.id > 0) {
-            // Update existing plant
-            savePromises.push(GardenApiService.updatePlant(plant.id, {
-              name: plant.name,
-              health: plant.health,
-              image_path: plant.imagePath,
-              size: plant.size,
-              position: plant.position,
-              growth_stage: plant.growth_stage,
-              last_watered: plant.last_watered || undefined, // Use undefined instead of empty string
-              days_without_water: plant.days_without_water,
-              water_streak: plant.water_streak,
-              total_water_count: plant.total_water_count,
-            }));
+          if (originalPlant) {
+            // Check if plant has changed
+            if (!arePlantsEqual(currentPlant, originalPlant)) {
+              savePromises.push(GardenApiService.updatePlant(currentPlant.id!, {
+                name: currentPlant.name,
+                health: currentPlant.health,
+                image_path: currentPlant.imagePath,
+                size: currentPlant.size,
+                position: currentPlant.position,
+                growth_stage: currentPlant.growth_stage,
+                last_watered: currentPlant.last_watered || undefined,
+                days_without_water: currentPlant.days_without_water,
+                water_streak: currentPlant.water_streak,
+                total_water_count: currentPlant.total_water_count,
+              }));
+              changesCount++;
+            }
           } else {
-            // Create new plant
+            // New plant - always save
             savePromises.push(GardenApiService.createPlant(plantData));
+            changesCount++;
           }
         }
+      }
+
+      // Check for deleted areals (exist in original but not in current)
+      for (const originalAreal of originalData) {
+        const currentAreal = editData.find(a => a.id === originalAreal.id);
+        if (!currentAreal) {
+          // Areal was deleted - this should have been handled by removeAreal function
+          // but we can add it here for completeness
+          console.log(`Areal ${originalAreal.id} was deleted`);
+        }
+      }
+
+      if (changesCount === 0) {
+        showSaveMessage('success', 'No changes to save.');
+        setIsSaving(false);
+        return;
       }
 
       const results = await Promise.all(savePromises);
       const failed = results.filter(r => !r.success);
 
       if (failed.length === 0) {
-        showSaveMessage('success', 'All changes saved successfully!');
+        showSaveMessage('success', `${changesCount} changes saved successfully!`);
         await refetchData(); // Refresh data from backend
       } else {
-        showSaveMessage('error', `${failed.length} operations failed. Please check and try again.`);
+        showSaveMessage('error', `${failed.length} of ${changesCount} operations failed. Please check and try again.`);
       }
     } catch (err) {
       console.error('Error saving changes:', err);
@@ -660,7 +758,7 @@ const Edit: React.FC = () => {
         <p className="disclaimer">
           Complete editing interface with full CRUD functionality. You can add, edit, and remove plants and areas.
           Plants can be moved between areas and include detailed watering statistics and growth tracking.
-          Changes are automatically synced with the backend database.
+          Notes can be edited and deleted as needed. All changes are automatically synced with the backend database.
         </p>
       </div>
 
@@ -669,13 +767,22 @@ const Edit: React.FC = () => {
         <div className="notes-header">
           <h2>Edit Notes</h2>
           {selectedNote && (
-            <button
-              className="save-button"
-              onClick={saveNote}
-              disabled={isSaving || !noteContent.trim()}
-            >
-              {isSaving ? 'Saving...' : 'Save Note'}
-            </button>
+            <div className="notes-actions">
+              <button
+                className="save-button"
+                onClick={saveNote}
+                disabled={isSaving || !noteContent.trim()}
+              >
+                {isSaving ? 'Saving...' : 'Save Note'}
+              </button>
+              <button
+                className="remove-button"
+                onClick={deleteNote}
+                disabled={isSaving}
+              >
+                {isSaving ? 'Deleting...' : 'Delete Note'}
+              </button>
+            </div>
           )}
         </div>
 
