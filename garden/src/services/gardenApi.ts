@@ -143,6 +143,12 @@ export const GardenApiService = {
       size: string;
       image_path: string;
       position: string;
+      areal_id: string;
+      growth_stage: number;
+      last_watered: string;
+      days_without_water: number;
+      water_streak: number;
+      total_water_count: number;
     }>
   ): Promise<{ success: boolean; message?: string; error?: string }> {
     try {
@@ -236,6 +242,32 @@ export const GardenApiService = {
       return { success: true, message: result.message };
     } catch (error) {
       console.error("Error deleting plant:", error);
+      return { success: false, error: String(error) };
+    }
+  },
+
+  async movePlant(
+    plantId: number,
+    newArealId: string
+  ): Promise<{ success: boolean; message?: string; error?: string }> {
+    try {
+      const response = await fetch(`${API_BASE_URL}/api/garden/plants/${plantId}`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ areal_id: newArealId }),
+      });
+
+      const result = await response.json();
+
+      if (!response.ok) {
+        return { success: false, error: result.error || "Failed to move plant" };
+      }
+
+      return { success: true, message: result.message };
+    } catch (error) {
+      console.error("Error moving plant:", error);
       return { success: false, error: String(error) };
     }
   },

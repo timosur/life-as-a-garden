@@ -140,6 +140,38 @@
       color: $color-text-primary;
       font-size: $font-size-medium;
     }
+
+    .plant-actions {
+      display: flex;
+      align-items: center;
+      gap: $margin-medium;
+
+      .move-plant-section {
+        display: flex;
+        align-items: center;
+        gap: $margin-small;
+
+        label {
+          font-size: $font-size-small;
+          color: $color-text-secondary;
+          font-weight: $font-weight-medium;
+        }
+
+        select {
+          padding: $padding-small;
+          border: 1px solid $color-primary-light;
+          border-radius: $border-radius-small;
+          background: $color-bg-white;
+          color: $color-text-primary;
+          font-size: $font-size-small;
+
+          &:focus {
+            outline: none;
+            border-color: $color-primary;
+          }
+        }
+      }
+    }
   }
 
   .plant-properties {

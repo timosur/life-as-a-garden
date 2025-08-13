@@ -9,6 +9,20 @@ import './Edit.scss';
 interface EditablePlant extends PlantConfig {
   id?: number;
   areal_id?: string;
+  growth_stage?: number;
+  last_watered?: string;
+  days_without_water?: number;
+  water_streak?: number;
+  total_water_count?: number;
+}
+
+interface PlantWithWateringData extends PlantConfig {
+  id?: number;
+  growth_stage?: number;
+  last_watered?: string;
+  days_without_water?: number;
+  water_streak?: number;
+  total_water_count?: number;
 }
 
 interface EditableAreal extends ArealConfig {
@@ -39,16 +53,24 @@ const Edit: React.FC = () => {
       // Convert garden data to editable format - plants already include IDs from /garden endpoint
       const editableAreals: EditableAreal[] = gardenConfig.areals.map(areal => {
         // Convert plants to editable format - plants from /garden should have IDs
-        const arealPlants: EditablePlant[] = areal.plants.map((plant, index) => ({
-          // Type assertion since we know /garden endpoint includes IDs
-          id: (plant as EditablePlant).id || -(index + 1), // Use negative IDs for new plants
-          name: plant.name,
-          health: plant.health as "healthy" | "okay" | "dead",
-          imagePath: plant.imagePath || '',
-          size: plant.size as "small" | "medium" | "big",
-          position: plant.position || '',
-          areal_id: areal.id
-        }));
+        const arealPlants: EditablePlant[] = areal.plants.map((plant, index) => {
+          const plantWithWateringData = plant as PlantWithWateringData;
+          return {
+            // Type assertion since we know /garden endpoint includes IDs
+            id: plantWithWateringData.id || -(index + 1), // Use negative IDs for new plants
+            name: plant.name,
+            health: plant.health as "healthy" | "okay" | "dead",
+            imagePath: plant.imagePath || '',
+            size: plant.size as "small" | "medium" | "big",
+            position: plant.position || '',
+            areal_id: areal.id,
+            growth_stage: plantWithWateringData.growth_stage || 1,
+            last_watered: plantWithWateringData.last_watered || '', // Keep as empty string for HTML date input
+            days_without_water: plantWithWateringData.days_without_water || 0,
+            water_streak: plantWithWateringData.water_streak || 0,
+            total_water_count: plantWithWateringData.total_water_count || 0,
+          };
+        });
 
         return {
           ...areal,
@@ -97,16 +119,24 @@ const Edit: React.FC = () => {
       if (data?.areals) {
         // Update editData with fresh data from backend
         const editableAreals: EditableAreal[] = data.areals.map(areal => {
-          const arealPlants: EditablePlant[] = areal.plants.map((plant, index) => ({
-            // Plants from /garden endpoint should have IDs, but handle missing ones
-            id: (plant as EditablePlant).id || -(index + 1),
-            name: plant.name,
-            health: plant.health as "healthy" | "okay" | "dead",
-            imagePath: plant.imagePath || '',
-            size: plant.size as "small" | "medium" | "big",
-            position: plant.position || '',
-            areal_id: areal.id
-          }));
+          const arealPlants: EditablePlant[] = areal.plants.map((plant, index) => {
+            const plantWithWateringData = plant as PlantWithWateringData;
+            return {
+              // Plants from /garden endpoint should have IDs, but handle missing ones
+              id: plantWithWateringData.id || -(index + 1),
+              name: plant.name,
+              health: plant.health as "healthy" | "okay" | "dead",
+              imagePath: plant.imagePath || '',
+              size: plant.size as "small" | "medium" | "big",
+              position: plant.position || '',
+              areal_id: areal.id,
+              growth_stage: plantWithWateringData.growth_stage || 1,
+              last_watered: plantWithWateringData.last_watered || '', // Keep as empty string for HTML date input
+              days_without_water: plantWithWateringData.days_without_water || 0,
+              water_streak: plantWithWateringData.water_streak || 0,
+              total_water_count: plantWithWateringData.total_water_count || 0,
+            };
+          });
 
           return {
             ...areal,
@@ -191,7 +221,12 @@ const Edit: React.FC = () => {
         size: 'small',
         position: '',
         areal_id: areal.id,
-        id: undefined // Will be assigned by backend
+        id: undefined, // Will be assigned by backend
+        growth_stage: 1,
+        last_watered: '',
+        days_without_water: 0,
+        water_streak: 0,
+        total_water_count: 0,
       };
 
       const newData = [...prev];
@@ -227,6 +262,27 @@ const Edit: React.FC = () => {
       }
       setIsSaving(false);
     }
+  };
+
+  const movePlant = async (plantId: number, newArealId: string, currentArealIndex: number) => {
+    if (!plantId || newArealId === editData[currentArealIndex].id) {
+      return; // No move needed if same area
+    }
+
+    setIsSaving(true);
+    try {
+      const result = await GardenApiService.movePlant(plantId, newArealId);
+      if (result.success) {
+        showSaveMessage('success', result.message || 'Plant moved successfully');
+        await refetchData(); // Refresh data to reflect the move
+      } else {
+        showSaveMessage('error', result.error || 'Failed to move plant');
+      }
+    } catch (err) {
+      console.error('Error moving plant:', err);
+      showSaveMessage('error', 'Failed to move plant');
+    }
+    setIsSaving(false);
   };
 
   const addAreal = () => {
@@ -300,7 +356,12 @@ const Edit: React.FC = () => {
             health: plant.health,
             image_path: plant.imagePath,
             size: plant.size,
-            position: plant.position
+            position: plant.position,
+            growth_stage: plant.growth_stage || 1,
+            last_watered: plant.last_watered || undefined, // Use undefined instead of empty string
+            days_without_water: plant.days_without_water || 0,
+            water_streak: plant.water_streak || 0,
+            total_water_count: plant.total_water_count || 0,
           };
 
           if (plant.id && plant.id > 0) {
@@ -310,7 +371,12 @@ const Edit: React.FC = () => {
               health: plant.health,
               image_path: plant.imagePath,
               size: plant.size,
-              position: plant.position
+              position: plant.position,
+              growth_stage: plant.growth_stage,
+              last_watered: plant.last_watered || undefined, // Use undefined instead of empty string
+              days_without_water: plant.days_without_water,
+              water_streak: plant.water_streak,
+              total_water_count: plant.total_water_count,
             }));
           } else {
             // Create new plant
@@ -442,13 +508,40 @@ const Edit: React.FC = () => {
                   <div key={`${areal.id}-${plantIndex}`} className="plant-editor">
                     <div className="plant-header">
                       <h4>{plant.name} {plant.id && <span className="plant-id">(ID: {plant.id})</span>}</h4>
-                      <button
-                        className="remove-button small"
-                        onClick={() => removePlant(arealIndex, plantIndex)}
-                        disabled={isSaving}
-                      >
-                        Remove
-                      </button>
+                      <div className="plant-actions">
+                        {plant.id && (
+                          <div className="move-plant-section">
+                            <label>Move to Area:</label>
+                            <select
+                              onChange={(e) => {
+                                if (e.target.value && plant.id) {
+                                  movePlant(plant.id, e.target.value, arealIndex);
+                                  e.target.value = ''; // Reset selection
+                                }
+                              }}
+                              disabled={isSaving}
+                              defaultValue=""
+                            >
+                              <option value="">Select area...</option>
+                              {editData
+                                .filter(a => a.id !== areal.id) // Exclude current area
+                                .map(a => (
+                                  <option key={a.id} value={a.id}>
+                                    {a.name}
+                                  </option>
+                                ))
+                              }
+                            </select>
+                          </div>
+                        )}
+                        <button
+                          className="remove-button small"
+                          onClick={() => removePlant(arealIndex, plantIndex)}
+                          disabled={isSaving}
+                        >
+                          Remove
+                        </button>
+                      </div>
                     </div>
 
                     <div className="plant-properties">
@@ -509,6 +602,51 @@ const Edit: React.FC = () => {
                           onChange={(e) => handlePlantChange(arealIndex, plantIndex, 'imagePath', e.target.value)}
                         />
                       </div>
+                      <div className="property-group">
+                        <label>Growth Stage</label>
+                        <input
+                          type="number"
+                          min="1"
+                          max="10"
+                          value={plant.growth_stage || 1}
+                          onChange={(e) => handlePlantChange(arealIndex, plantIndex, 'growth_stage', parseInt(e.target.value) || 1)}
+                        />
+                      </div>
+                      <div className="property-group">
+                        <label>Last Watered</label>
+                        <input
+                          type="date"
+                          value={plant.last_watered || ''}
+                          onChange={(e) => handlePlantChange(arealIndex, plantIndex, 'last_watered', e.target.value)}
+                        />
+                      </div>
+                      <div className="property-group">
+                        <label>Days Without Water</label>
+                        <input
+                          type="number"
+                          min="0"
+                          value={plant.days_without_water || 0}
+                          onChange={(e) => handlePlantChange(arealIndex, plantIndex, 'days_without_water', parseInt(e.target.value) || 0)}
+                        />
+                      </div>
+                      <div className="property-group">
+                        <label>Water Streak</label>
+                        <input
+                          type="number"
+                          min="0"
+                          value={plant.water_streak || 0}
+                          onChange={(e) => handlePlantChange(arealIndex, plantIndex, 'water_streak', parseInt(e.target.value) || 0)}
+                        />
+                      </div>
+                      <div className="property-group">
+                        <label>Total Water Count</label>
+                        <input
+                          type="number"
+                          min="0"
+                          value={plant.total_water_count || 0}
+                          onChange={(e) => handlePlantChange(arealIndex, plantIndex, 'total_water_count', parseInt(e.target.value) || 0)}
+                        />
+                      </div>
                     </div>
                   </div>
                 ))}
@@ -521,6 +659,7 @@ const Edit: React.FC = () => {
       <div className="edit-footer">
         <p className="disclaimer">
           Complete editing interface with full CRUD functionality. You can add, edit, and remove plants and areas.
+          Plants can be moved between areas and include detailed watering statistics and growth tracking.
           Changes are automatically synced with the backend database.
         </p>
       </div>

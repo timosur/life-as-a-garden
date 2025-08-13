@@ -36,7 +36,9 @@ class PlantRepository:
                         plant_data.get("water_streak", 1),
                         plant_data.get("total_water_count", 20),
                         plant_data.get("growth_stage", 5),
-                        plant_data.get("last_watered", None),
+                        plant_data.get("last_watered", None)
+                        if plant_data.get("last_watered")
+                        else None,
                     ),
                 )
 
@@ -147,8 +149,13 @@ class PlantRepository:
 
             for field, value in plant_data.items():
                 if value is not None and field in field_mapping:
-                    update_fields.append(f"{field_mapping[field]} = ?")
-                    values.append(value)
+                    # Special handling for last_watered to convert empty strings to None
+                    if field == "last_watered" and value == "":
+                        update_fields.append(f"{field_mapping[field]} = ?")
+                        values.append(None)
+                    else:
+                        update_fields.append(f"{field_mapping[field]} = ?")
+                        values.append(value)
 
             if not update_fields:
                 return False

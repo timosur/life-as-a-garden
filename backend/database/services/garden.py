@@ -42,6 +42,11 @@ class GardenService:
                     "imagePath": plant["image_path"],
                     "size": plant["size"],
                     "position": plant["position"],
+                    "growth_stage": plant["growth_stage"],
+                    "last_watered": plant["last_watered"],
+                    "days_without_water": plant["days_without_water"],
+                    "water_streak": plant["water_streak"],
+                    "total_water_count": plant["total_water_count"],
                 }
                 areal_data["plants"].append(plant_data)
 
