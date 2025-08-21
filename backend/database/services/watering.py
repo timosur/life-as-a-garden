@@ -202,12 +202,13 @@ class WateringService:
         - Okay plants: Need 3 consecutive days to become "healthy"
         - Healthy plants: Stay healthy with any watering
         - Growth is based on total water count and consistency
+        - Size growth: Every 20 waterings increases size (small->medium->big)
+        - Plants never decrease in size
         """
         # Store old state for change tracking
         old_state = {
             "health": plant["health"],
             "size": plant["size"],
-            "growth_stage": plant["growth_stage"],
             "water_streak": plant["water_streak"],
             "total_water_count": plant["total_water_count"],
             "days_without_water": plant["days_without_water"],
@@ -225,11 +226,11 @@ class WateringService:
                 # Consecutive day - increase streak
                 new_streak = plant["water_streak"] + 1
             else:
-                # If more than 3 days gap, reset streak
-                if days_gap > 3:
+                # If more than 5 days gap, reset streak
+                if days_gap > 5:
                     new_streak = 1
                 else:
-                    # If within 3 days, keep the streak
+                    # If within 5 days, keep the streak
                     new_streak = plant["water_streak"]
         else:
             # First time watering
@@ -259,39 +260,25 @@ class WateringService:
             # Healthy plants stay healthy with any watering
             new_health = "healthy"
 
-        # Simplified growth stage calculation (1-3 based on water streak)
-        # Growth stages: 1=Young, 2=Mature, 3=Flourishing
-        if new_streak >= 5:
-            new_growth_stage = 3  # Flourishing
-        elif new_streak >= 3:
-            new_growth_stage = 2  # Mature
+        # Size calculation based on total water count (every 20 waterings = next size)
+        # Plants never decrease in size
+        current_size = plant["size"]
+        if new_total_count >= 40:
+            new_size = "big"
+        elif new_total_count >= 20:
+            new_size = "medium"
         else:
-            new_growth_stage = 1  # Young
-
-        # Simplified size calculation based on health and growth stage
-        if new_health == "dead":
-            # Dead plants stay small
             new_size = "small"
-        elif new_health == "okay":
-            # Okay plants can grow to medium if mature
-            if new_growth_stage >= 2:
-                new_size = "medium"
-            else:
-                new_size = "small"
-        else:  # healthy
-            # Healthy plants can reach full potential
-            if new_growth_stage == 3:
-                new_size = "big"
-            elif new_growth_stage == 2:
-                new_size = "medium"
-            else:
-                new_size = "small"
+
+        # Ensure size never decreases
+        size_hierarchy = {"small": 1, "medium": 2, "big": 3}
+        if size_hierarchy.get(current_size, 1) > size_hierarchy.get(new_size, 1):
+            new_size = current_size
 
         # Create new state for change tracking
         new_state = {
             "health": new_health,
             "size": new_size,
-            "growth_stage": new_growth_stage,
             "water_streak": new_streak,
             "total_water_count": new_total_count,
             "days_without_water": 0,
@@ -310,7 +297,6 @@ class WateringService:
             0,  # days_without_water reset to 0
             new_streak,
             new_total_count,
-            new_growth_stage,
             new_health,
             new_size,
         )
@@ -318,7 +304,6 @@ class WateringService:
         return {
             "health": new_health,
             "size": new_size,
-            "growth_stage": new_growth_stage,
             "water_streak": new_streak,
             "total_water_count": new_total_count,
             "days_without_water": 0,
@@ -372,7 +357,6 @@ class WateringService:
                     old_state = {
                         "health": plant["health"],
                         "size": plant["size"],
-                        "growth_stage": plant["growth_stage"],
                         "water_streak": plant["water_streak"],
                         "total_water_count": plant["total_water_count"],
                         "days_without_water": plant["days_without_water"],
@@ -402,7 +386,6 @@ class WateringService:
                         new_state["days_without_water"],
                         new_state["water_streak"],
                         new_state["total_water_count"],
-                        new_state["growth_stage"],
                         new_state["health"],
                         new_state["size"],
                     )
@@ -458,7 +441,7 @@ class WateringService:
         - Okay plants: Become "dead" after 4 days without water
         - Dead plants: Stay dead
         - Water streak: Reset after 3 days without water
-        - Size reduction: Big→Medium after 8 days, Medium→Small after 10 days
+        - Size: Never decreases, only grows based on total water count
         """
         days_without_water = plant["days_without_water"] + 1
         current_health = plant["health"]
@@ -479,17 +462,11 @@ class WateringService:
         # Reset water streak after 3 days without water
         new_streak = 0 if days_without_water >= 3 else plant["water_streak"]
 
-        # Simplified size reduction logic - only after extended periods
-        new_size = current_size
-        if current_size == "big" and days_without_water >= 8:
-            new_size = "medium"
-        elif current_size == "medium" and days_without_water >= 10:
-            new_size = "small"
-        # Small plants stay small
+        # Size never decreases - plants only grow based on total water count
+        new_size = current_size  # Keep current size (no reduction)
 
         return {
             "health": new_health,
-            "growth_stage": plant["growth_stage"],  # Growth stage doesn't decrease
             "water_streak": new_streak,
             "total_water_count": plant[
                 "total_water_count"
@@ -505,7 +482,6 @@ class WateringService:
         return (
             old_state["health"] != new_state["health"]
             or old_state["size"] != new_state["size"]
-            or old_state["growth_stage"] != new_state["growth_stage"]
             or old_state["water_streak"] != new_state["water_streak"]
             or old_state["days_without_water"] != new_state["days_without_water"]
             or old_state["total_water_count"] != new_state["total_water_count"]

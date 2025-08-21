@@ -1,4 +1,11 @@
-"""Main garden service for handling garden data operations."""
+"""Main garden service for handling gard                    "health": plant["health"],
+"image_path": plant["image_path"],
+"size": plant["size"],
+"position": plant["position"],
+"last_watered": plant["last_watered"],
+"days_without_water": plant["days_without_water"],
+"water_streak": plant["water_streak"],
+"total_water_count": plant["total_water_count"],perations."""
 
 from typing import List, Dict, Any, Optional
 from ..base import DatabaseConnection
@@ -42,7 +49,6 @@ class GardenService:
                     "imagePath": plant["image_path"],
                     "size": plant["size"],
                     "position": plant["position"],
-                    "growth_stage": plant["growth_stage"],
                     "last_watered": plant["last_watered"],
                     "days_without_water": plant["days_without_water"],
                     "water_streak": plant["water_streak"],

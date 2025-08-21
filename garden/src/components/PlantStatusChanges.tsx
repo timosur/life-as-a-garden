@@ -90,7 +90,6 @@ export const PlantStatusChanges: React.FC<PlantStatusChangesProps> = ({ classNam
       const healthOrder = { dead: 0, okay: 1, healthy: 2 };
       return healthOrder[c.new_health as keyof typeof healthOrder] > healthOrder[c.old_health as keyof typeof healthOrder];
     }).length,
-    growthIncrease: changes.filter(c => c.new_growth_stage > c.old_growth_stage).length,
     sizeIncrease: changes.filter(c => {
       const sizeOrder = { small: 0, medium: 1, big: 2 };
       return sizeOrder[c.new_size as keyof typeof sizeOrder] > sizeOrder[c.old_size as keyof typeof sizeOrder];
@@ -102,7 +101,7 @@ export const PlantStatusChanges: React.FC<PlantStatusChangesProps> = ({ classNam
       {/* Compact Summary */}
       <div className="summary-section-compact">
         <div className="summary-line">
-          <strong>📊 Zusammenfassung:</strong> {summary.totalPlants} Pflanzen • {summary.watered} gegossen • {summary.healthImproved} verbessert • {summary.growthIncrease} gewachsen • {summary.sizeIncrease} vergrößert
+          <strong>📊 Zusammenfassung:</strong> {summary.totalPlants} Pflanzen • {summary.watered} gegossen • {summary.healthImproved} verbessert • {summary.sizeIncrease} vergrößert
         </div>
       </div>
 
@@ -113,7 +112,6 @@ export const PlantStatusChanges: React.FC<PlantStatusChangesProps> = ({ classNam
               <th>Pflanze</th>
               <th>Gesundheit</th>
               <th>Größe</th>
-              <th>Wachstum</th>
               <th>Wasserserie</th>
               <th>Tage ohne Wasser</th>
               <th>Insgesamt</th>
@@ -150,18 +148,6 @@ export const PlantStatusChanges: React.FC<PlantStatusChangesProps> = ({ classNam
                           }`}>
                           {(change.new_size === 'big' && change.old_size !== 'big') ||
                             (change.new_size === 'medium' && change.old_size === 'small') ? '📏↗️' : '📏↘️'}
-                        </span>
-                      )}
-                    </div>
-                  </td>
-                  <td className="growth-cell">
-                    <div className="stat-change">
-                      <span className="stat-values">
-                        {change.old_growth_stage} → {change.new_growth_stage}
-                      </span>
-                      {change.new_growth_stage > change.old_growth_stage && (
-                        <span className="change-indicator growth-up">
-                          📈 +{change.new_growth_stage - change.old_growth_stage}
                         </span>
                       )}
                     </div>

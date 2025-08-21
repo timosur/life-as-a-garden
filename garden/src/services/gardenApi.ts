@@ -144,7 +144,6 @@ export const GardenApiService = {
       image_path: string;
       position: string;
       areal_id: string;
-      growth_stage: number;
       last_watered: string;
       days_without_water: number;
       water_streak: number;
@@ -183,7 +182,6 @@ export const GardenApiService = {
     days_without_water?: number;
     water_streak?: number;
     total_water_count?: number;
-    growth_stage?: number;
     last_watered?: string;
   }): Promise<{
     success: boolean;

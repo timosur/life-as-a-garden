@@ -76,7 +76,7 @@ class WateringRepository:
 
             # Get list of plants watered today
             watered_plants = conn.execute(
-                """SELECT p.name, p.health, p.size, p.growth_stage 
+                """SELECT p.name, p.health, p.size 
                    FROM plants p 
                    JOIN watering_history wh ON p.id = wh.plant_id 
                    WHERE wh.watering_date = ?""",
@@ -136,7 +136,6 @@ class WateringRepository:
                     p.name,
                     p.health,
                     p.size,
-                    p.growth_stage,
                     p.last_watered,
                     p.days_without_water,
                     p.water_streak,
@@ -146,8 +145,6 @@ class WateringRepository:
                     wh.created_at as watering_time,
                     psc.old_health,
                     psc.new_health,
-                    psc.old_growth_stage,
-                    psc.new_growth_stage,
                     psc.old_water_streak,
                     psc.new_water_streak,
                     psc.old_days_without_water,
@@ -183,7 +180,6 @@ class WateringRepository:
                     before_state = {
                         "health": plant["old_health"],
                         "size": plant["old_size"],
-                        "growth_stage": plant["old_growth_stage"],
                         "water_streak": plant["old_water_streak"],
                         "total_water_count": plant["old_total_water_count"],
                         "days_without_water": plant["old_days_without_water"],
@@ -192,7 +188,6 @@ class WateringRepository:
                     after_state = {
                         "health": plant["new_health"],
                         "size": plant["new_size"],
-                        "growth_stage": plant["new_growth_stage"],
                         "water_streak": plant["new_water_streak"],
                         "total_water_count": plant["new_total_water_count"],
                         "days_without_water": plant["new_days_without_water"],
@@ -202,7 +197,6 @@ class WateringRepository:
                     after_state = {
                         "health": plant["health"],
                         "size": plant["size"],
-                        "growth_stage": plant["growth_stage"],
                         "water_streak": plant["water_streak"],
                         "total_water_count": plant["total_water_count"],
                         "days_without_water": plant["days_without_water"],
@@ -213,8 +207,6 @@ class WateringRepository:
                 changes = {
                     "health_changed": before_state["health"] != after_state["health"],
                     "size_changed": before_state["size"] != after_state["size"],
-                    "growth_increased": after_state["growth_stage"]
-                    > before_state["growth_stage"],
                     "water_streak_increased": after_state["water_streak"]
                     > before_state["water_streak"],
                     "days_without_water_reset": after_state["days_without_water"] == 0
@@ -255,18 +247,16 @@ class WateringRepository:
                 conn.execute(
                     """INSERT INTO plant_status_changes 
                        (plant_id, change_date, change_type, old_health, new_health, 
-                        old_growth_stage, new_growth_stage, old_water_streak, new_water_streak,
+                        old_water_streak, new_water_streak,
                         old_days_without_water, new_days_without_water, 
                         old_total_water_count, new_total_water_count, old_size, new_size)
-                       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
+                       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
                     (
                         plant_id,
                         change_date,
                         change_type,
                         old_state["health"],
                         new_state["health"],
-                        old_state["growth_stage"],
-                        new_state["growth_stage"],
                         old_state["water_streak"],
                         new_state["water_streak"],
                         old_state["days_without_water"],

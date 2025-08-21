@@ -22,8 +22,8 @@ class PlantRepository:
                     """
                     INSERT INTO plants 
                     (areal_id, name, health, image_path, size, position, 
-                     days_without_water, water_streak, total_water_count, growth_stage, last_watered)
-                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                     days_without_water, water_streak, total_water_count, last_watered)
+                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                 """,
                     (
                         areal_id,
@@ -35,7 +35,6 @@ class PlantRepository:
                         plant_data.get("days_without_water", 0),
                         plant_data.get("water_streak", 1),
                         plant_data.get("total_water_count", 20),
-                        plant_data.get("growth_stage", 5),
                         plant_data.get("last_watered", None)
                         if plant_data.get("last_watered")
                         else None,
@@ -143,7 +142,6 @@ class PlantRepository:
                 "days_without_water": "days_without_water",
                 "water_streak": "water_streak",
                 "total_water_count": "total_water_count",
-                "growth_stage": "growth_stage",
                 "last_watered": "last_watered",
             }
 
@@ -178,7 +176,6 @@ class PlantRepository:
         days_without_water: int,
         water_streak: int,
         total_water_count: int,
-        growth_stage: int,
         health: str,
         size: str,
     ) -> bool:
@@ -191,7 +188,6 @@ class PlantRepository:
                        days_without_water = ?, 
                        water_streak = ?, 
                        total_water_count = ?,
-                       growth_stage = ?,
                        health = ?,
                        size = ?,
                        updated_at = CURRENT_TIMESTAMP
@@ -201,7 +197,6 @@ class PlantRepository:
                         days_without_water,
                         water_streak,
                         total_water_count,
-                        growth_stage,
                         health,
                         size,
                         plant_id,

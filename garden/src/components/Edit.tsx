@@ -9,7 +9,6 @@ import './Edit.scss';
 interface EditablePlant extends PlantConfig {
   id?: number;
   areal_id?: string;
-  growth_stage?: number;
   last_watered?: string;
   days_without_water?: number;
   water_streak?: number;
@@ -18,7 +17,6 @@ interface EditablePlant extends PlantConfig {
 
 interface PlantWithWateringData extends PlantConfig {
   id?: number;
-  growth_stage?: number;
   last_watered?: string;
   days_without_water?: number;
   water_streak?: number;
@@ -65,7 +63,6 @@ const Edit: React.FC = () => {
             size: plant.size as "small" | "medium" | "big",
             position: plant.position || '',
             areal_id: areal.id,
-            growth_stage: plantWithWateringData.growth_stage || 1,
             last_watered: plantWithWateringData.last_watered || '', // Keep as empty string for HTML date input
             days_without_water: plantWithWateringData.days_without_water || 0,
             water_streak: plantWithWateringData.water_streak || 0,
@@ -133,7 +130,6 @@ const Edit: React.FC = () => {
               size: plant.size as "small" | "medium" | "big",
               position: plant.position || '',
               areal_id: areal.id,
-              growth_stage: plantWithWateringData.growth_stage || 1,
               last_watered: plantWithWateringData.last_watered || '', // Keep as empty string for HTML date input
               days_without_water: plantWithWateringData.days_without_water || 0,
               water_streak: plantWithWateringData.water_streak || 0,
@@ -237,7 +233,6 @@ const Edit: React.FC = () => {
       plant1.imagePath === plant2.imagePath &&
       plant1.size === plant2.size &&
       plant1.position === plant2.position &&
-      plant1.growth_stage === plant2.growth_stage &&
       plant1.last_watered === plant2.last_watered &&
       plant1.days_without_water === plant2.days_without_water &&
       plant1.water_streak === plant2.water_streak &&
@@ -281,7 +276,6 @@ const Edit: React.FC = () => {
         position: '',
         areal_id: areal.id,
         id: undefined, // Will be assigned by backend
-        growth_stage: 1,
         last_watered: '',
         days_without_water: 0,
         water_streak: 0,
@@ -435,7 +429,6 @@ const Edit: React.FC = () => {
             image_path: currentPlant.imagePath,
             size: currentPlant.size,
             position: currentPlant.position,
-            growth_stage: currentPlant.growth_stage || 1,
             last_watered: currentPlant.last_watered || undefined,
             days_without_water: currentPlant.days_without_water || 0,
             water_streak: currentPlant.water_streak || 0,
@@ -451,7 +444,6 @@ const Edit: React.FC = () => {
                 image_path: currentPlant.imagePath,
                 size: currentPlant.size,
                 position: currentPlant.position,
-                growth_stage: currentPlant.growth_stage,
                 last_watered: currentPlant.last_watered || undefined,
                 days_without_water: currentPlant.days_without_water,
                 water_streak: currentPlant.water_streak,
@@ -698,16 +690,6 @@ const Edit: React.FC = () => {
                           type="text"
                           value={plant.imagePath}
                           onChange={(e) => handlePlantChange(arealIndex, plantIndex, 'imagePath', e.target.value)}
-                        />
-                      </div>
-                      <div className="property-group">
-                        <label>Growth Stage</label>
-                        <input
-                          type="number"
-                          min="1"
-                          max="10"
-                          value={plant.growth_stage || 1}
-                          onChange={(e) => handlePlantChange(arealIndex, plantIndex, 'growth_stage', parseInt(e.target.value) || 1)}
                         />
                       </div>
                       <div className="property-group">

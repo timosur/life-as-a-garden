@@ -72,7 +72,6 @@ class DatabaseConnection:
                 image_path TEXT NOT NULL,
                 size TEXT NOT NULL,
                 position TEXT NOT NULL,
-                growth_stage INTEGER DEFAULT 1,
                 last_watered DATE NULL,
                 days_without_water INTEGER DEFAULT 0,
                 water_streak INTEGER DEFAULT 0,

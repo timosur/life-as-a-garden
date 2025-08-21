@@ -55,8 +55,6 @@ export interface PlantStatusChange {
   new_health: string;
   old_size: string;
   new_size: string;
-  old_growth_stage: number;
-  new_growth_stage: number;
   old_water_streak: number;
   new_water_streak: number;
   old_days_without_water: number;

@@ -33,7 +33,6 @@ class PlantUpdate(BaseModel):
     image_path: Optional[str] = None
     position: Optional[str] = None
     areal_id: Optional[str] = None
-    growth_stage: Optional[int] = None
     last_watered: Optional[str] = None
     days_without_water: Optional[int] = None
     water_streak: Optional[int] = None
@@ -50,7 +49,6 @@ class PlantCreate(BaseModel):
     days_without_water: int = 0
     water_streak: int = 1
     total_water_count: int = 20
-    growth_stage: int = 5
     last_watered: Optional[str] = None
 
 
