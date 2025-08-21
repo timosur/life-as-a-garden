@@ -1,4 +1,4 @@
-FROM python:3.11
+FROM python:3.11-slim
 
 # Set working directory
 WORKDIR /app
@@ -33,6 +33,7 @@ RUN pip install --no-cache-dir -r requirements.txt
 
 # Install Playwright browsers
 RUN playwright install chromium && \
+    npx playwright install-deps && \
     playwright install-deps chromium
 
 # Copy the application code
