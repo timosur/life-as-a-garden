@@ -196,14 +196,6 @@ class WateringService:
     ) -> Dict[str, Any]:
         """
         Calculate new plant status after watering with simplified logic.
-
-        Simplified Recovery Logic:
-        - Dead plants: Need 3 consecutive days to become "okay", 5 days to become "healthy"
-        - Okay plants: Need 3 consecutive days to become "healthy"
-        - Healthy plants: Stay healthy with any watering
-        - Growth is based on total water count and consistency
-        - Size growth: Every 20 waterings increases size (small->medium->big)
-        - Plants never decrease in size
         """
         # Store old state for change tracking
         old_state = {
@@ -435,13 +427,6 @@ class WateringService:
     ) -> Dict[str, Any]:
         """
         Calculate new plant status when not watered (centralized logic).
-
-        Simplified Watering Timeline:
-        - Healthy plants: Stay healthy for 5 days, become "okay" after 6 days
-        - Okay plants: Become "dead" after 4 days without water
-        - Dead plants: Stay dead
-        - Water streak: Reset after 3 days without water
-        - Size: Never decreases, only grows based on total water count
         """
         days_without_water = plant["days_without_water"] + 1
         current_health = plant["health"]
@@ -450,12 +435,12 @@ class WateringService:
         # Simplified health degradation logic
         new_health = current_health
         if current_health == "healthy":
-            # Healthy plants downgrade to okay after 6 days without water
-            if days_without_water >= 6:
+            # Healthy plants downgrade to okay after 7 days without water
+            if days_without_water >= 7:
                 new_health = "okay"
         elif current_health == "okay":
-            # Okay plants become dead after 4 days without water
-            if days_without_water >= 4:
+            # Okay plants become dead after 14 days without water
+            if days_without_water >= 14:
                 new_health = "dead"
         # Dead plants stay dead
 
