@@ -5,6 +5,9 @@ services:
     build:
       context: ./nginx
       dockerfile: Dockerfile
+      args:
+        - AUTH_USER=${AUTH_USER:-garden}
+        - AUTH_PASS=${AUTH_PASS:-changeme123}
     container_name: garden-nginx
     ports:
       - "80:80"

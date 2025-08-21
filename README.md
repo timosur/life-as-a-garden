@@ -34,15 +34,27 @@ Das System sendet automatisch E-Mail-Benachrichtigungen für:
    ```bash
    cp backend/.env.example backend/.env
    # Bearbeite backend/.env mit deinen API-Schlüsseln und E-Mail-Einstellungen
+
+   cp .env.example .env
+   # Bearbeite .env mit deinen Basic Auth Zugangsdaten
    ```
 
-3. **System starten**:
+3. **Basic Authentication einrichten**:
+
+   ```bash
+   # Setze sichere Zugangsdaten in .env
+   AUTH_USER=your-username
+   AUTH_PASS=your-secure-password
+   ```
+
+4. **System starten**:
 
    ```bash
    docker-compose up -d --build
    ```
 
-4. **E-Mail-Konfiguration testen**:
+5. **E-Mail-Konfiguration testen**:
+
    ```bash
    curl -X POST http://localhost:8000/api/notifications/test-email
    ```

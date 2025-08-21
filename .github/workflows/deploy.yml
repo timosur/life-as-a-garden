@@ -34,6 +34,12 @@ jobs:
         cat > garden/.env << EOF
         VITE_API_BASE_URL=https://garden.timosur.com
         EOF
+        
+        # Create root .env file for basic authentication
+        cat > .env << EOF
+        AUTH_USER=${{ secrets.AUTH_USER }}
+        AUTH_PASS=${{ secrets.AUTH_PASS }}
+        EOF
       
     - name: Stop existing containers
       run: |
