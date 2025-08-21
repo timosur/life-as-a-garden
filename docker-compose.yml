@@ -101,8 +101,9 @@ services:
     depends_on:
       - backend
     restart: unless-stopped
+    # Simple health check for static frontend - just verify nginx is responding
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:80"]
+      test: ["CMD", "wget", "--spider", "--quiet", "http://localhost:80/"]
       interval: 3600s
       timeout: 10s
       retries: 3
