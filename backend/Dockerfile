@@ -16,10 +16,15 @@ RUN apt-get update && apt-get install -y \
     && rm -rf /var/lib/apt/lists/*
 
 # Configure ImageMagick policy to allow PDF reading
-RUN sed -i 's/rights="none" pattern="PDF"/rights="read|write" pattern="PDF"/' /etc/ImageMagick-6/policy.xml && \
-    sed -i 's/rights="none" pattern="PS"/rights="read|write" pattern="PS"/' /etc/ImageMagick-6/policy.xml && \
-    sed -i 's/rights="none" pattern="EPS"/rights="read|write" pattern="EPS"/' /etc/ImageMagick-6/policy.xml && \
-    sed -i 's/rights="none" pattern="XPS"/rights="read|write" pattern="XPS"/' /etc/ImageMagick-6/policy.xml
+RUN POLICY_FILE=$(find /etc -name "policy.xml" -path "*/ImageMagick*" 2>/dev/null | head -1) && \
+    if [ -n "$POLICY_FILE" ]; then \
+        sed -i 's/rights="none" pattern="PDF"/rights="read|write" pattern="PDF"/' "$POLICY_FILE" && \
+        sed -i 's/rights="none" pattern="PS"/rights="read|write" pattern="PS"/' "$POLICY_FILE" && \
+        sed -i 's/rights="none" pattern="EPS"/rights="read|write" pattern="EPS"/' "$POLICY_FILE" && \
+        sed -i 's/rights="none" pattern="XPS"/rights="read|write" pattern="XPS"/' "$POLICY_FILE"; \
+    else \
+        echo "ImageMagick policy.xml not found, skipping policy configuration"; \
+    fi
 
 # Copy requirements first for better caching
 COPY requirements.txt .
