@@ -1,5 +1,4 @@
-# Uses Ubuntu Jammy with all Playwright bits preinstalled (ARM64 supported)
-FROM mcr.microsoft.com/playwright/python:v1.54.0-jammy
+FROM mcr.microsoft.com/playwright/python:v1.54.0-noble
 
 WORKDIR /app
 

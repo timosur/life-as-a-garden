@@ -9,15 +9,9 @@ RUN rm -f /etc/nginx/conf.d/default.conf
 # Use nginx configuration file from the build context
 COPY nginx.conf /etc/nginx/nginx.conf
 
-# Copy htpasswd creation script
-COPY create-htpasswd.sh /tmp/create-htpasswd.sh
-RUN chmod +x /tmp/create-htpasswd.sh
-
-# Create htpasswd file with default credentials (change these!)
-# You can override these with environment variables
-ARG AUTH_USER=garden
-ARG AUTH_PASS=changeme123
-RUN /tmp/create-htpasswd.sh "$AUTH_USER" "$AUTH_PASS"
+# Copy and setup entrypoint script for runtime credential setup
+COPY docker-entrypoint.sh /docker-entrypoint.sh
+RUN chmod +x /docker-entrypoint.sh
 
 # Create directory for Let's Encrypt challenges
 RUN mkdir -p /var/www/certbot
@@ -31,5 +25,6 @@ RUN mkdir -p /var/log/nginx
 # Expose ports
 EXPOSE 80 443
 
-# Start nginx
+# Set entrypoint and start nginx
+ENTRYPOINT ["/docker-entrypoint.sh"]
 CMD ["nginx", "-g", "daemon off;"]
