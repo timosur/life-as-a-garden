@@ -47,7 +47,7 @@ services:
     environment:
       - PYTHONPATH=/app
       - PYTHONUNBUFFERED=1
-      - FRONTEND_URL=https://garden.timosur.com/
+      - FRONTEND_URL=http://frontend:80
       - RMAPI_SERVICE_URL=http://rmapi-wrapper:8001
     env_file:
       - ./backend/.env
