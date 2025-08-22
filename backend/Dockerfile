@@ -6,20 +6,22 @@ WORKDIR /app
 
 # Install system dependencies for Playwright and ImageMagick
 RUN apt-get update && apt-get install -y \
-    wget \
-    gnupg \
-    unzip \
-    curl \
-    ca-certificates \
-    imagemagick \
-    inkscape \
-    && rm -rf /var/lib/apt/lists/*
+  wget \
+  gnupg \
+  unzip \
+  curl \
+  ca-certificates \
+  imagemagick \
+  inkscape \
+  libgbm1 \
+  libasound2 \
+  && rm -rf /var/lib/apt/lists/*
 
 # Configure ImageMagick policy to allow PDF reading
 RUN sed -i 's/rights="none" pattern="PDF"/rights="read|write" pattern="PDF"/' /etc/ImageMagick-7/policy.xml && \
-    sed -i 's/rights="none" pattern="PS"/rights="read|write" pattern="PS"/' /etc/ImageMagick-7/policy.xml && \
-    sed -i 's/rights="none" pattern="EPS"/rights="read|write" pattern="EPS"/' /etc/ImageMagick-7/policy.xml && \
-    sed -i 's/rights="none" pattern="XPS"/rights="read|write" pattern="XPS"/' /etc/ImageMagick-7/policy.xml
+  sed -i 's/rights="none" pattern="PS"/rights="read|write" pattern="PS"/' /etc/ImageMagick-7/policy.xml && \
+  sed -i 's/rights="none" pattern="EPS"/rights="read|write" pattern="EPS"/' /etc/ImageMagick-7/policy.xml && \
+  sed -i 's/rights="none" pattern="XPS"/rights="read|write" pattern="XPS"/' /etc/ImageMagick-7/policy.xml
 
 # Copy requirements first for better caching
 COPY requirements.txt .
@@ -29,7 +31,7 @@ RUN pip install --no-cache-dir -r requirements.txt
 
 # Install Playwright browsers
 RUN playwright install chromium && \
-    playwright install-deps chromium
+  playwright install-deps chromium
 
 # Copy the application code
 COPY . .
