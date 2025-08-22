@@ -2,10 +2,15 @@ FROM mcr.microsoft.com/playwright/python:v1.54.0-noble
 
 WORKDIR /app
 
-# Optional: tools you still need
 RUN apt-get update && apt-get install -y \
-    imagemagick inkscape \
-  && rm -rf /var/lib/apt/lists/*
+    wget \
+    gnupg \
+    unzip \
+    curl \
+    ca-certificates \
+    imagemagick \
+    inkscape \
+    && rm -rf /var/lib/apt/lists/*
 
 # If you must relax ImageMagick PDF policy (be aware of security implications)
 RUN POLICY_FILE=$(find /etc -name "policy.xml" -path "*/ImageMagick*" 2>/dev/null | head -1) && \
