@@ -1,7 +1,10 @@
-FROM mcr.microsoft.com/playwright/python:v1.54.0-noble
+# Use Python 3.11 slim image
+FROM python:3.11-slim
 
+# Set working directory
 WORKDIR /app
 
+# Install system dependencies for Playwright and ImageMagick
 RUN apt-get update && apt-get install -y \
     wget \
     gnupg \
@@ -12,23 +15,34 @@ RUN apt-get update && apt-get install -y \
     inkscape \
     && rm -rf /var/lib/apt/lists/*
 
-# If you must relax ImageMagick PDF policy (be aware of security implications)
-RUN POLICY_FILE=$(find /etc -name "policy.xml" -path "*/ImageMagick*" 2>/dev/null | head -1) && \
-    if [ -n "$POLICY_FILE" ]; then \
-      sed -i 's/rights="none" pattern="PDF"/rights="read|write" pattern="PDF"/' "$POLICY_FILE" && \
-      sed -i 's/rights="none" pattern="PS"/rights="read|write" pattern="PS"/' "$POLICY_FILE" && \
-      sed -i 's/rights="none" pattern="EPS"/rights="read|write" pattern="EPS"/' "$POLICY_FILE" && \
-      sed -i 's/rights="none" pattern="XPS"/rights="read|write" pattern="XPS"/' "$POLICY_FILE"; \
-    fi
+# Configure ImageMagick policy to allow PDF reading
+RUN sed -i 's/rights="none" pattern="PDF"/rights="read|write" pattern="PDF"/' /etc/ImageMagick-6/policy.xml && \
+    sed -i 's/rights="none" pattern="PS"/rights="read|write" pattern="PS"/' /etc/ImageMagick-6/policy.xml && \
+    sed -i 's/rights="none" pattern="EPS"/rights="read|write" pattern="EPS"/' /etc/ImageMagick-6/policy.xml && \
+    sed -i 's/rights="none" pattern="XPS"/rights="read|write" pattern="XPS"/' /etc/ImageMagick-6/policy.xml
 
+# Copy requirements first for better caching
 COPY requirements.txt .
+
+# Install Python dependencies
 RUN pip install --no-cache-dir -r requirements.txt
 
+# Install Playwright browsers
+RUN playwright install chromium && \
+    playwright install-deps chromium
+
+# Copy the application code
 COPY . .
+
+# Create necessary directories
 RUN mkdir -p input output db
 
+# Expose the port FastAPI will run on
 EXPOSE 8000
+
+# Set environment variables
 ENV PYTHONPATH=/app
 ENV PYTHONUNBUFFERED=1
 
+# Command to run the application
 CMD ["fastapi", "run", "main.py", "--host", "0.0.0.0", "--port", "8000"]
