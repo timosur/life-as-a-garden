@@ -17,11 +17,24 @@ RUN apt-get update && apt-get install -y \
   libasound2 \
   && rm -rf /var/lib/apt/lists/*
 
-# Configure ImageMagick policy to allow PDF reading
-RUN sed -i 's/rights="none" pattern="PDF"/rights="read|write" pattern="PDF"/' /etc/ImageMagick-7/policy.xml && \
-  sed -i 's/rights="none" pattern="PS"/rights="read|write" pattern="PS"/' /etc/ImageMagick-7/policy.xml && \
-  sed -i 's/rights="none" pattern="EPS"/rights="read|write" pattern="EPS"/' /etc/ImageMagick-7/policy.xml && \
-  sed -i 's/rights="none" pattern="XPS"/rights="read|write" pattern="XPS"/' /etc/ImageMagick-7/policy.xml
+# Relax the PDF/PS/EPS/XPS policy for whichever IM version is present
+RUN set -eux; \
+  POLICY_FILE=""; \
+  if [ -f /etc/ImageMagick-7/policy.xml ]; then POLICY_FILE=/etc/ImageMagick-7/policy.xml; \
+  elif [ -f /etc/ImageMagick-6/policy.xml ]; then POLICY_FILE=/etc/ImageMagick-6/policy.xml; \
+  elif [ -f /etc/ImageMagick/policy.xml ]; then POLICY_FILE=/etc/ImageMagick/policy.xml; \
+  fi; \
+  echo "Using policy file: ${POLICY_FILE:-<none>}"; \
+  if [ -n "$POLICY_FILE" ]; then \
+  # If the deny rules exist, flip them; otherwise append allow rules.
+  sed -i -E 's/rights="none" pattern="(PDF|PS|EPS|XPS)"/rights="read|write" pattern="\1"/g' "$POLICY_FILE" || true; \
+  grep -q 'pattern="PDF"' "$POLICY_FILE" || { \
+  awk 'BEGIN{print "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<policymap>"} 1 END{print "  <policy domain=\"coder\" rights=\"read|write\" pattern=\"PDF\"/>\n  <policy domain=\"coder\" rights=\"read|write\" pattern=\"PS\"/>\n  <policy domain=\"coder\" rights=\"read|write\" pattern=\"EPS\"/>\n  <policy domain=\"coder\" rights=\"read|write\" pattern=\"XPS\"/>\n</policymap>"}' \
+  > "$POLICY_FILE"; \
+  }; \
+  else \
+  echo "WARNING: No ImageMagick policy.xml found."; \
+  fi
 
 # Copy requirements first for better caching
 COPY requirements.txt .
