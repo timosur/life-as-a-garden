@@ -41,9 +41,11 @@ services:
       context: ./backend
       dockerfile: Dockerfile
     container_name: garden-backend
-    # Port only exposed internally to nginx
+    # Expose port on 8000
     expose:
       - "8000"
+    ports:
+      - "8000:8000" # Exposed for garden API access, needed for printing, bypassing the nginx auth
     environment:
       - PYTHONPATH=/app
       - PYTHONUNBUFFERED=1

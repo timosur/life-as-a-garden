@@ -2,79 +2,79 @@ name: Deploy Life as a Garden
 
 on:
   push:
-    branches: [ main ]
+    branches: [main]
   pull_request:
-    branches: [ main ]
-  workflow_dispatch:  # Allow manual triggering
+    branches: [main]
+  workflow_dispatch: # Allow manual triggering
 
 jobs:
   deploy:
     runs-on: self-hosted
-    
+
     steps:
-    - name: Checkout code
-      uses: actions/checkout@v4
-      
-    - name: Create environment files
-      run: |
-        # Create backend .env file from secrets
-        mkdir -p backend
-        cat > backend/.env << EOF
-        OPENAI_API_KEY=${{ secrets.OPENAI_API_KEY }}
-        SMTP_HOST=smtp.gmail.com
-        SMTP_PORT=587
-        SMTP_USERNAME=${{ secrets.SMTP_USERNAME }}
-        SMTP_PASSWORD=${{ secrets.SMTP_PASSWORD }}
-        NOTIFICATION_EMAIL=lebensgarten@timosur.com
-        EMAIL_NOTIFICATIONS_ENABLED=true
-        EOF
-        
-        # Create frontend .env file for production deployment
-        mkdir -p garden
-        cat > garden/.env << EOF
-        VITE_API_BASE_URL=https://garden.timosur.com
-        EOF
-        
-        # Create root .env file for basic authentication
-        cat > .env << EOF
-        AUTH_USER=${{ secrets.AUTH_USER }}
-        AUTH_PASS=${{ secrets.AUTH_PASS }}
-        EOF
-      
-    - name: Stop existing containers
-      run: |
-        docker-compose down || true
-        
-    - name: Remove old images
-      run: |
-        docker system prune -f
-        
-    - name: Backup database
-      run: |
-        # Create backup of database with current date
-        DB_PATH="/var/lib/garden/db/garden.db"
-        BACKUP_DIR="/var/lib/garden/db"
-        DATE=$(date +%d%m%Y)
-        
-        if [ -f "$DB_PATH" ]; then
-          echo "Creating database backup..."
-          cp "$DB_PATH" "${BACKUP_DIR}/garden_backup_${DATE}.db"
-          echo "Database backup created: garden_backup_${DATE}.db"
-        else
-          echo "Database file not found at $DB_PATH, skipping backup"
-        fi
-        
-    - name: Initialize Let's Encrypt certificates (first time only)
-      run: |
-        # Check if certificates already exist
-        if [ ! -f "/var/lib/garden/certbot/conf/live/garden.timosur.com/fullchain.pem" ]; then
-          echo "SSL certificates not found. Initializing Let's Encrypt..."
-          chmod +x ./init-letsencrypt.sh
-          ./init-letsencrypt.sh
-        else
-          echo "SSL certificates already exist. Skipping initialization."
-        fi
-        
-    - name: Build and start services
-      run: |
-        docker-compose up -d --build
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Create environment files
+        run: |
+          # Create backend .env file from secrets
+          mkdir -p backend
+          cat > backend/.env << EOF
+          OPENAI_API_KEY=${{ secrets.OPENAI_API_KEY }}
+          SMTP_HOST=smtp.gmail.com
+          SMTP_PORT=587
+          SMTP_USERNAME=${{ secrets.SMTP_USERNAME }}
+          SMTP_PASSWORD=${{ secrets.SMTP_PASSWORD }}
+          NOTIFICATION_EMAIL=lebensgarten@timosur.com
+          EMAIL_NOTIFICATIONS_ENABLED=true
+          EOF
+
+          # Create frontend .env file for production deployment
+          mkdir -p garden
+          cat > garden/.env << EOF
+          VITE_API_BASE_URL=http://localhost:8000
+          EOF
+
+          # Create root .env file for basic authentication
+          cat > .env << EOF
+          AUTH_USER=${{ secrets.AUTH_USER }}
+          AUTH_PASS=${{ secrets.AUTH_PASS }}
+          EOF
+
+      - name: Stop existing containers
+        run: |
+          docker-compose down || true
+
+      - name: Remove old images
+        run: |
+          docker system prune -f
+
+      - name: Backup database
+        run: |
+          # Create backup of database with current date
+          DB_PATH="/var/lib/garden/db/garden.db"
+          BACKUP_DIR="/var/lib/garden/db"
+          DATE=$(date +%d%m%Y)
+
+          if [ -f "$DB_PATH" ]; then
+            echo "Creating database backup..."
+            cp "$DB_PATH" "${BACKUP_DIR}/garden_backup_${DATE}.db"
+            echo "Database backup created: garden_backup_${DATE}.db"
+          else
+            echo "Database file not found at $DB_PATH, skipping backup"
+          fi
+
+      - name: Initialize Let's Encrypt certificates (first time only)
+        run: |
+          # Check if certificates already exist
+          if [ ! -f "/var/lib/garden/certbot/conf/live/garden.timosur.com/fullchain.pem" ]; then
+            echo "SSL certificates not found. Initializing Let's Encrypt..."
+            chmod +x ./init-letsencrypt.sh
+            ./init-letsencrypt.sh
+          else
+            echo "SSL certificates already exist. Skipping initialization."
+          fi
+
+      - name: Build and start services
+        run: |
+          docker-compose up -d --build
