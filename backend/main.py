@@ -3,7 +3,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from typing import Optional
-from datetime import date
+from datetime import date, datetime
 
 from database import GardenDatabase
 from utils.image_analysis import analyze_checklist_and_notes_image
@@ -361,11 +361,17 @@ def analyze_garden():
 
 
 @app.post("/api/garden/water")
-def water_plants_from_analysis():
+def water_plants_from_analysis(watering_date: Optional[str] = None):
     """
     Analyze the garden checklist image and notes, then water the checked plants.
     Updates plant status based on watering algorithm.
     After watering, prints the garden to PDF and uploads to reMarkable.
+
+    Args:
+        watering_date: Optional date string (YYYY-MM-DD) to set as last watered date for
+                       all watered plants. If not provided, uses today's date.
+    Returns:
+        A dictionary with analysis results, watering results, garden stats, and upload status.
     """
     try:
         # First, analyze the checklist image and notes
@@ -387,19 +393,21 @@ def water_plants_from_analysis():
             }
 
         # Water the checked plants
-        watering_result = garden_db.water_plants(checked_plants)
+        watering_result = garden_db.water_plants(
+            checked_plants, watering_date=watering_date
+        )
 
         # Save notes if extracted from analysis
         notes_save_result = None
         if hasattr(analysis_result, "notes") and analysis_result.notes:
             try:
-                from datetime import date
-
-                today = date.today()
+                my_date = date.today()
+                if watering_date:
+                    my_date = datetime.strptime(watering_date, "%Y-%m-%d").date()
 
                 # Check if notes already exist for today
-                if not garden_db.note_exists_for_date(today):
-                    note_id = garden_db.create_note(analysis_result.notes, today)
+                if not garden_db.note_exists_for_date(my_date):
+                    note_id = garden_db.create_note(analysis_result.notes, my_date)
                     notes_save_result = {
                         "success": True,
                         "note_id": note_id,
@@ -408,7 +416,7 @@ def water_plants_from_analysis():
                 else:
                     notes_save_result = {
                         "success": False,
-                        "message": "Notes already exist for today, skipping save",
+                        "message": f"Notes already exist for {my_date}, skipping save",
                     }
             except Exception as e:
                 notes_save_result = {
