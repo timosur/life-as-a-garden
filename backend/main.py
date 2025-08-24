@@ -11,7 +11,11 @@ from utils.pdf_generator import (
     print_garden_to_pdf_sync as print_garden_to_pdf,
     print_notes_to_pdf_sync,
 )
-from utils.rmapi_client import archive_and_upload_remarkable, upload_notes_to_remarkable
+from utils.rmapi_client import (
+    archive_and_upload_garden_remarkable,
+    upload_notes_to_remarkable,
+    delete_and_upload_garden_remarkable,
+)
 from settings import settings
 from health_check import create_health_checker
 from utils.email_service import email_service
@@ -290,11 +294,17 @@ def print_garden():
         garden_pdf_path = print_garden_to_pdf()
         notes_pdf_path = print_notes_to_pdf_sync()
 
+        # Upload to reMarkable
+        upload_result = delete_and_upload_garden_remarkable(garden_pdf_path)
+        notes_upload_result = upload_notes_to_remarkable(notes_pdf_path)
+
         return {
             "success": True,
             "message": "Garden printed successfully",
             "garden_pdf_path": garden_pdf_path,
             "notes_pdf_path": notes_pdf_path,
+            "upload_result": upload_result,
+            "notes_upload_result": notes_upload_result,
         }
     except Exception as e:
         return {"success": False, "error": f"Failed to print garden: {str(e)}"}
@@ -416,7 +426,7 @@ def water_plants_from_analysis():
             pdf_path = print_garden_to_pdf()
 
             # Upload to reMarkable
-            upload_result = archive_and_upload_remarkable(pdf_path)
+            upload_result = archive_and_upload_garden_remarkable(pdf_path)
 
             print_result = {
                 "success": True,

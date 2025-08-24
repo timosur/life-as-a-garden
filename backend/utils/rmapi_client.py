@@ -175,7 +175,7 @@ class RmapiClient:
         return self._make_request("GET", "/api/rmapi/health")
 
 
-def upload_pdf_to_remarkable(pdf_path: str) -> bool:
+def upload_and_rename_garden_to_remarkable(pdf_path: str) -> bool:
     """
     Upload a PDF to reMarkable tablet using the rmapi REST API service.
 
@@ -230,7 +230,7 @@ def upload_pdf_to_remarkable(pdf_path: str) -> bool:
         return False
 
 
-def archive_and_upload_remarkable(pdf_path: str) -> dict:
+def archive_and_upload_garden_remarkable(pdf_path: str) -> dict:
     """
     Archive existing file and upload new PDF to reMarkable with detailed result.
 
@@ -241,7 +241,7 @@ def archive_and_upload_remarkable(pdf_path: str) -> dict:
         dict: Detailed result containing success status and operation details
     """
     try:
-        upload_success = upload_pdf_to_remarkable(pdf_path)
+        upload_success = upload_and_rename_garden_to_remarkable(pdf_path)
 
         return {
             "success": upload_success,
@@ -256,6 +256,68 @@ def archive_and_upload_remarkable(pdf_path: str) -> dict:
             "success": False,
             "uploaded_to_remarkable": False,
             "message": f"Error during reMarkable upload: {str(e)}",
+        }
+
+
+def delete_and_upload_garden_remarkable(pdf_path: str) -> dict:
+    """
+    Delete existing Lebensgarten file and upload new PDF to reMarkable.
+
+    Args:
+        pdf_path: Path to the PDF file to upload
+    Returns:
+        dict: Detailed result containing success status and operation details
+    """
+
+    try:
+        client = RmapiClient()
+
+        # Step 1: Try to remove existing Lebensgarten file
+        print("🗑️ Attempting to remove existing Lebensgarten file...")
+        try:
+            rm_result = client.rm("Journal/Lebensgarten/Lebensgarten")
+
+            if rm_result.get("success"):
+                print("✅ Existing Lebensgarten file removed successfully")
+            else:
+                print(
+                    f"ℹ️ No existing Lebensgarten file found or could not remove: {rm_result.get('error', 'Unknown error')}"
+                )
+        except Exception as e:
+            print(
+                f"ℹ️ No existing Lebensgarten file found or could not remove: {str(e)}"
+            )
+
+        # Step 2: Upload the new PDF
+        print("📤 Uploading new PDF to reMarkable...")
+
+        put_result = client.put(pdf_path, "/Journal/Lebensgarten")
+
+        if put_result.get("success"):
+            print("✅ PDF uploaded successfully to reMarkable!")
+            return {
+                "success": True,
+                "uploaded_to_remarkable": True,
+                "message": "PDF uploaded successfully to reMarkable",
+            }
+        else:
+            error_msg = (
+                f"Failed to upload PDF: {put_result.get('error', 'Unknown error')}"
+            )
+            print(f"❌ {error_msg}")
+            return {
+                "success": False,
+                "uploaded_to_remarkable": False,
+                "message": error_msg,
+            }
+
+    except Exception as e:
+        error_msg = f"Error during reMarkable upload: {str(e)}"
+        print(f"❌ {error_msg}")
+        return {
+            "success": False,
+            "uploaded_to_remarkable": False,
+            "message": error_msg,
         }
 
 
