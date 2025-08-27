@@ -1,15 +1,13 @@
 import type { GardenData, PlantStatusChangesResponse, NotesResponse } from "../types/garden";
 
 const getApiBaseUrl = () => {
-  // If frontend is being accessed from localhost, use http://localhost:8000
   // If frontend is accessed from garden.timosur.com, use https://garden.timosur.com
-  if (window.location.hostname === "localhost") {
-    return "http://localhost:8000";
-  } else if (window.location.hostname === "garden.timosur.com") {
+  if (window.location.hostname === "garden.timosur.com") {
     return "https://garden.timosur.com";
   }
 
-  throw new Error("Unable to determine API base URL");
+  // Otherwise, use http://localhost:8000
+  return "http://localhost:8000";
 };
 
 const API_BASE_URL = getApiBaseUrl();
