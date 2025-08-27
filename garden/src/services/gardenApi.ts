@@ -1,7 +1,18 @@
 import type { GardenData, PlantStatusChangesResponse, NotesResponse } from "../types/garden";
 
-// API-Service für echte REST API
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "http://localhost:8000";
+const getApiBaseUrl = () => {
+  // If frontend is being accessed from localhost, use http://localhost:8000
+  // If frontend is accessed from garden.timosur.com, use https://garden.timosur.com
+  if (window.location.hostname === "localhost") {
+    return "http://localhost:8000";
+  } else if (window.location.hostname === "garden.timosur.com") {
+    return "https://garden.timosur.com";
+  }
+
+  throw new Error("Unable to determine API base URL");
+};
+
+const API_BASE_URL = getApiBaseUrl();
 
 export const GardenApiService = {
   async getGardenData(): Promise<GardenData | null> {

@@ -6,14 +6,6 @@ This is the frontend React application for the Life as a Garden project, built w
 
 The application uses environment variables to configure the API base URL for different deployment scenarios:
 
-### Local Development
-
-For local development, create a `.env.local` file in the garden directory:
-
-```env
-VITE_API_BASE_URL=http://localhost:8000
-```
-
 ### Docker Development
 
 When running via Docker Compose, the default fallback URL `http://localhost:8000` will be used automatically.
@@ -37,13 +29,7 @@ For GitHub Actions deployment, the `.env` file is automatically created during t
    npm install
    ```
 
-2. Create `.env.local` for local development:
-
-   ```bash
-   echo "VITE_API_BASE_URL=http://localhost:8000" > .env.local
-   ```
-
-3. Start the development server:
+2. Start the development server:
 
    ```bash
    npm run dev

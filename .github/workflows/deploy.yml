@@ -29,12 +29,6 @@ jobs:
           EMAIL_NOTIFICATIONS_ENABLED=true
           EOF
 
-          # Create frontend .env file for production deployment
-          mkdir -p garden
-          cat > garden/.env << EOF
-          VITE_API_BASE_URL=http://localhost:8000
-          EOF
-
           # Create root .env file for basic authentication
           cat > .env << EOF
           AUTH_USER=${{ secrets.AUTH_USER }}
