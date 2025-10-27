@@ -45,6 +45,8 @@ const Edit: React.FC = () => {
   const [selectedNote, setSelectedNote] = useState<Note | null>(null);
   const [noteContent, setNoteContent] = useState<string>('');
   const [notesLoading, setNotesLoading] = useState(false);
+  const [isCreatingNewNote, setIsCreatingNewNote] = useState(false);
+  const [newNoteDate, setNewNoteDate] = useState<string>('');
 
   // Initialize edit data when garden data loads
   useEffect(() => {
@@ -211,6 +213,59 @@ const Edit: React.FC = () => {
       showSaveMessage('error', 'Failed to delete note. Please try again.');
     }
     setIsSaving(false);
+  };
+
+  const createNote = async () => {
+    if (!newNoteDate.trim() || !noteContent.trim()) {
+      showSaveMessage('error', 'Please provide both date and content for the new note');
+      return;
+    }
+
+    setIsSaving(true);
+    try {
+      const result = await GardenApiService.createNote({
+        extracted_at: newNoteDate,
+        content: noteContent
+      });
+
+      if (result.success && result.note) {
+        showSaveMessage('success', 'Note created successfully!');
+
+        // Add the new note to local state
+        const newNote = result.note;
+        setNotes(prev => [...prev, newNote].sort((a, b) =>
+          new Date(b.extracted_at).getTime() - new Date(a.extracted_at).getTime()
+        ));
+
+        // Select the new note
+        setSelectedNoteId(newNote.id);
+        setSelectedNote(newNote);
+
+        // Exit creation mode
+        setIsCreatingNewNote(false);
+        setNewNoteDate('');
+      } else {
+        showSaveMessage('error', result.error || 'Failed to create note');
+      }
+    } catch (err) {
+      console.error('Error creating note:', err);
+      showSaveMessage('error', 'Failed to create note. Please try again.');
+    }
+    setIsSaving(false);
+  };
+
+  const startCreateNote = () => {
+    setIsCreatingNewNote(true);
+    setSelectedNote(null);
+    setSelectedNoteId(null);
+    setNoteContent('');
+    setNewNoteDate(new Date().toISOString().split('T')[0]); // Today's date as default
+  };
+
+  const cancelCreateNote = () => {
+    setIsCreatingNewNote(false);
+    setNewNoteDate('');
+    setNoteContent('');
   };
 
   const showSaveMessage = (type: 'success' | 'error', message: string) => {
@@ -748,42 +803,83 @@ const Edit: React.FC = () => {
       <div className="notes-editing-section">
         <div className="notes-header">
           <h2>Edit Notes</h2>
-          {selectedNote && (
-            <div className="notes-actions">
+          <div className="notes-actions">
+            {!isCreatingNewNote && (
               <button
-                className="save-button"
-                onClick={saveNote}
-                disabled={isSaving || !noteContent.trim()}
-              >
-                {isSaving ? 'Saving...' : 'Save Note'}
-              </button>
-              <button
-                className="remove-button"
-                onClick={deleteNote}
+                className="add-button"
+                onClick={startCreateNote}
                 disabled={isSaving}
               >
-                {isSaving ? 'Deleting...' : 'Delete Note'}
+                Create New Note
               </button>
-            </div>
-          )}
+            )}
+            {isCreatingNewNote && (
+              <>
+                <button
+                  className="save-button"
+                  onClick={createNote}
+                  disabled={isSaving || !noteContent.trim() || !newNoteDate.trim()}
+                >
+                  {isSaving ? 'Creating...' : 'Create Note'}
+                </button>
+                <button
+                  className="cancel-button"
+                  onClick={cancelCreateNote}
+                  disabled={isSaving}
+                >
+                  Cancel
+                </button>
+              </>
+            )}
+            {selectedNote && !isCreatingNewNote && (
+              <>
+                <button
+                  className="save-button"
+                  onClick={saveNote}
+                  disabled={isSaving || !noteContent.trim()}
+                >
+                  {isSaving ? 'Saving...' : 'Save Note'}
+                </button>
+                <button
+                  className="remove-button"
+                  onClick={deleteNote}
+                  disabled={isSaving}
+                >
+                  {isSaving ? 'Deleting...' : 'Delete Note'}
+                </button>
+              </>
+            )}
+          </div>
         </div>
 
         <div className="notes-controls">
-          <div className="property-group">
-            <label>Select Note by Date</label>
-            <select
-              value={selectedNoteId || ''}
-              onChange={(e) => setSelectedNoteId(e.target.value ? Number(e.target.value) : null)}
-              disabled={notesLoading}
-            >
-              <option value="">Select a note...</option>
-              {notes.map((note) => (
-                <option key={note.id} value={note.id}>
-                  {note.extracted_at} (ID: {note.id})
-                </option>
-              ))}
-            </select>
-          </div>
+          {isCreatingNewNote ? (
+            <div className="property-group">
+              <label>Date for New Note</label>
+              <input
+                type="date"
+                value={newNoteDate}
+                onChange={(e) => setNewNoteDate(e.target.value)}
+                disabled={isSaving}
+              />
+            </div>
+          ) : (
+            <div className="property-group">
+              <label>Select Note by Date</label>
+              <select
+                value={selectedNoteId || ''}
+                onChange={(e) => setSelectedNoteId(e.target.value ? Number(e.target.value) : null)}
+                disabled={notesLoading}
+              >
+                <option value="">Select a note...</option>
+                {notes.map((note) => (
+                  <option key={note.id} value={note.id}>
+                    {note.extracted_at} (ID: {note.id})
+                  </option>
+                ))}
+              </select>
+            </div>
+          )}
         </div>
 
         {notesLoading && (
@@ -793,7 +889,7 @@ const Edit: React.FC = () => {
           </div>
         )}
 
-        {selectedNote && (
+        {selectedNote && !isCreatingNewNote && (
           <div className="note-editor">
             <div className="note-info">
               <p><strong>Date:</strong> {selectedNote.extracted_at}</p>
@@ -809,6 +905,26 @@ const Edit: React.FC = () => {
                 disabled={isSaving}
                 rows={15}
                 placeholder="Enter note content..."
+              />
+              <p className="character-count">{noteContent.length} characters</p>
+            </div>
+          </div>
+        )}
+
+        {isCreatingNewNote && (
+          <div className="note-editor">
+            <div className="note-info">
+              <p><strong>Creating new note for:</strong> {newNoteDate || 'Select a date'}</p>
+            </div>
+
+            <div className="note-content-editor">
+              <label>Note Content</label>
+              <textarea
+                value={noteContent}
+                onChange={(e) => setNoteContent(e.target.value)}
+                disabled={isSaving}
+                rows={15}
+                placeholder="Enter content for the new note..."
               />
               <p className="character-count">{noteContent.length} characters</p>
             </div>

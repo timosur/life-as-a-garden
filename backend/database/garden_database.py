@@ -178,6 +178,10 @@ class GardenDatabase:
         """Get all notes ordered by extraction date."""
         return self.notes_service.get_all_notes()
 
+    def get_note_by_id(self, note_id: int) -> Optional[Dict[str, Any]]:
+        """Get a single note by ID."""
+        return self.notes_service.get_note_by_id(note_id)
+
     def get_notes_by_date_range(
         self, start_date: date, end_date: date
     ) -> List[Dict[str, Any]]:

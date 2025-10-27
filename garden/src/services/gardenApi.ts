@@ -143,6 +143,44 @@ export const GardenApiService = {
     }
   },
 
+  async createNote(noteData: { extracted_at: string; content: string }): Promise<{
+    success: boolean;
+    message?: string;
+    error?: string;
+    note?: {
+      id: number;
+      extracted_at: string;
+      content: string;
+      created_at: string;
+      updated_at: string;
+    };
+  }> {
+    try {
+      const response = await fetch(`${API_BASE_URL}/api/notes`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(noteData),
+      });
+
+      const result = await response.json();
+
+      if (!response.ok) {
+        return { success: false, error: result.error || "Failed to create note" };
+      }
+
+      return {
+        success: true,
+        message: result.message,
+        note: result.note,
+      };
+    } catch (error) {
+      console.error("Error creating note:", error);
+      return { success: false, error: String(error) };
+    }
+  },
+
   // Plant CRUD operations
   async updatePlant(
     plantId: number,

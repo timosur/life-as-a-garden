@@ -221,7 +221,8 @@
 // Button Styles
 .save-button,
 .add-button,
-.remove-button {
+.remove-button,
+.cancel-button {
   padding: $padding-small $padding-medium;
   border: none;
   border-radius: $border-radius-medium;
@@ -269,6 +270,15 @@
   &.small {
     padding: 4px 8px;
     font-size: $font-size-small;
+  }
+}
+
+.cancel-button {
+  background: #6c757d; // Gray color
+  color: white;
+
+  &:hover:not(:disabled) {
+    background: #5a6268; // Darker gray
   }
 }
 

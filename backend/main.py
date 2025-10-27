@@ -707,6 +707,45 @@ def update_note(note_id: int, note_data: dict):
         return {"success": False, "error": f"Failed to update note: {str(e)}"}
 
 
+@app.post("/api/notes")
+def create_note(note_data: dict):
+    """Create a new note."""
+    try:
+        extracted_at = note_data.get("extracted_at", "").strip()
+        content = note_data.get("content", "").strip()
+
+        if not extracted_at:
+            return {"success": False, "error": "extracted_at is required"}
+        if not content:
+            return {"success": False, "error": "Content cannot be empty"}
+
+        # Validate date format
+        from datetime import datetime
+
+        try:
+            date_obj = datetime.strptime(extracted_at, "%Y-%m-%d").date()
+        except ValueError:
+            return {"success": False, "error": "Invalid date format. Use YYYY-MM-DD"}
+
+        # Create the note
+        note_id = garden_db.create_note(content, date_obj)
+        if note_id:
+            # Fetch the created note to return complete data
+            note = garden_db.get_note_by_id(note_id)
+            if note:
+                return {
+                    "success": True,
+                    "message": "Note created successfully",
+                    "note": note,
+                }
+            else:
+                return {"success": False, "error": "Failed to retrieve created note"}
+        else:
+            return {"success": False, "error": "Failed to create note"}
+    except Exception as e:
+        return {"success": False, "error": f"Failed to create note: {str(e)}"}
+
+
 @app.get("/api/health")
 async def health_check():
     """
