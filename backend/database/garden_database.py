@@ -156,6 +156,14 @@ class GardenDatabase:
         """Get plant status changes for today only."""
         return self.garden_service.get_todays_plant_status_changes()
 
+    def get_watering_history_by_date_range(
+        self, start_date: str, end_date: str
+    ) -> List[Dict[str, Any]]:
+        """Get watering history within a date range for calendar display."""
+        return self.garden_service.get_watering_history_by_date_range(
+            start_date, end_date
+        )
+
     def migrate_daily_limit_to_4(self) -> bool:
         """Migrate existing database to set daily limit to 4 plants."""
         return self.garden_service.migrate_daily_limit_to_4()

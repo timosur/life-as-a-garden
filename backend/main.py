@@ -621,6 +621,55 @@ def water_single_plant(plant_identifier: str, by_id: bool = False):
         return {"success": False, "error": f"Failed to water plant: {str(e)}"}
 
 
+@app.get("/api/garden/watering/calendar/{start_date}/{end_date}")
+def get_watering_calendar(start_date: str, end_date: str):
+    """Get watering history for calendar display within a date range."""
+    try:
+        from datetime import datetime
+
+        # Validate date format
+        datetime.strptime(start_date, "%Y-%m-%d")
+        datetime.strptime(end_date, "%Y-%m-%d")
+
+        history = garden_db.get_watering_history_by_date_range(start_date, end_date)
+
+        return {
+            "success": True,
+            "watering_history": history,
+            "start_date": start_date,
+            "end_date": end_date,
+            "count": len(history),
+        }
+    except ValueError as e:
+        return {
+            "success": False,
+            "error": f"Invalid date format. Use YYYY-MM-DD: {str(e)}",
+        }
+    except Exception as e:
+        return {"success": False, "error": f"Failed to get watering calendar: {str(e)}"}
+
+
+@app.get("/api/garden/watering/history")
+def get_all_watering_history():
+    """Debug endpoint to get all watering history."""
+    try:
+        # Get all watering history without filters
+        from backend.database.repositories.watering import WateringRepository
+        from backend.database.base import DatabaseConnection
+        
+        db = DatabaseConnection()
+        watering_repo = WateringRepository(db)
+        history = watering_repo.get_watering_history()
+        
+        return {
+            "success": True,
+            "watering_history": history,
+            "count": len(history),
+        }
+    except Exception as e:
+        return {"success": False, "error": f"Failed to get watering history: {str(e)}"}
+
+
 # Notes API endpoints
 @app.get("/api/notes")
 def get_all_notes():

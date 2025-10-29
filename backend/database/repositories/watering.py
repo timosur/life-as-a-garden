@@ -360,3 +360,17 @@ class WateringRepository:
             if row:
                 return dict(row)
             return None
+
+    def get_watering_history_by_date_range(
+        self, start_date: str, end_date: str
+    ) -> List[Dict[str, Any]]:
+        """Get watering history within a date range for calendar display."""
+        with self.db.get_connection() as conn:
+            query = """SELECT wh.watering_date, p.name as plant_name, p.id as plant_id
+                      FROM watering_history wh 
+                      JOIN plants p ON wh.plant_id = p.id 
+                      WHERE wh.watering_date >= ? AND wh.watering_date <= ?
+                      ORDER BY wh.watering_date DESC, p.name ASC"""
+
+            cursor = conn.execute(query, (start_date, end_date))
+            return [dict(row) for row in cursor.fetchall()]

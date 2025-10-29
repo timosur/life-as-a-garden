@@ -22,6 +22,12 @@ const Navigation = () => {
             📝 Notes
           </Link>
           <Link
+            to="/calendar"
+            className={`nav-button ${location.pathname === '/calendar' ? 'active' : ''}`}
+          >
+            🗓️ Calendar
+          </Link>
+          <Link
             to="/edit"
             className={`nav-button ${location.pathname === '/edit' ? 'active' : ''}`}
           >

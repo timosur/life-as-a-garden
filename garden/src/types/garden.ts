@@ -86,3 +86,18 @@ export interface NotesResponse {
   start_date?: string;
   end_date?: string;
 }
+
+export interface WateringCalendarEntry {
+  watering_date: string;
+  plant_name: string;
+  plant_id: number;
+}
+
+export interface WateringCalendarResponse {
+  success: boolean;
+  watering_history: WateringCalendarEntry[];
+  start_date: string;
+  end_date: string;
+  count: number;
+  error?: string;
+}

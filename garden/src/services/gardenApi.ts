@@ -398,4 +398,38 @@ export const GardenApiService = {
       return { success: false, error: String(error) };
     }
   },
+
+  async getWateringCalendar(
+    startDate: string,
+    endDate: string
+  ): Promise<{
+    success: boolean;
+    watering_history?: Array<{
+      watering_date: string;
+      plant_name: string;
+      plant_id: number;
+    }>;
+    start_date?: string;
+    end_date?: string;
+    count?: number;
+    error?: string;
+  }> {
+    try {
+      const response = await fetch(
+        `${API_BASE_URL}/api/garden/watering/calendar/${startDate}/${endDate}`
+      );
+
+      if (!response.ok) {
+        throw new Error("Failed to fetch watering calendar data");
+      }
+
+      return await response.json();
+    } catch (error) {
+      console.error("Error fetching watering calendar:", error);
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : String(error),
+      };
+    }
+  },
 };
