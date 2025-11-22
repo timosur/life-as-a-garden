@@ -59,7 +59,7 @@ def run_rmapi_command(command: List[str]) -> RmapiResponse:
             # For Apple Silicon Macs, use the macOS arm64 binary
             rmapi_binary = script_dir / "bin" / "rmapi-darwin-arm64"
         else:
-            rmapi_binary = script_dir / "bin" / "rmapi-arm64"
+            rmapi_binary = script_dir / "bin" / "rmapi-linux-arm64"
 
         # Build the command with the local binary
         full_cmd = [str(rmapi_binary)] + command
