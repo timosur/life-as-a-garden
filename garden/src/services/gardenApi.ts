@@ -1,13 +1,10 @@
 import type { GardenData, PlantStatusChangesResponse, NotesResponse } from "../types/garden";
 
 const getApiBaseUrl = () => {
-  // If frontend is accessed from garden.timosur.com, use https://garden.timosur.com
-  if (window.location.hostname === "garden.timosur.com") {
-    return "https://garden.timosur.com";
+  if (window.location.hostname === "localhost") {
+    return "http://localhost:8000";
   }
-
-  // Otherwise, use http://localhost:8000
-  return "http://localhost:8000";
+  return `${window.location.protocol}//${window.location.host}`;
 };
 
 const API_BASE_URL = getApiBaseUrl();
@@ -36,9 +33,8 @@ export const GardenApiService = {
       if (plantId) params.append("plant_id", plantId.toString());
       if (limit) params.append("limit", limit.toString());
 
-      const url = `${API_BASE_URL}/api/garden/plant-status-changes${
-        params.toString() ? "?" + params.toString() : ""
-      }`;
+      const url = `${API_BASE_URL}/api/garden/plant-status-changes${params.toString() ? "?" + params.toString() : ""
+        }`;
       const response = await fetch(url);
 
       if (!response.ok) {

@@ -451,30 +451,6 @@ def water_plants_from_analysis(watering_date: Optional[str] = None):
                 "error": f"Failed to print and upload garden: {str(e)}",
             }
 
-        # Generate and upload Notes PDF
-        notes_result = None
-        try:
-            # Generate Notes PDF
-            notes_pdf_path = print_notes_to_pdf_sync()
-
-            # Upload Notes to reMarkable
-            notes_upload_result = upload_notes_to_remarkable(notes_pdf_path)
-
-            notes_result = {
-                "success": True,
-                "pdf_path": notes_pdf_path,
-                "uploaded_to_remarkable": notes_upload_result["uploaded_to_remarkable"],
-                "message": "Notes printed and uploaded successfully"
-                if notes_upload_result["success"]
-                else "Notes printed but upload failed",
-                "upload_details": notes_upload_result,
-            }
-        except Exception as e:
-            notes_result = {
-                "success": False,
-                "error": f"Failed to print and upload notes: {str(e)}",
-            }
-
         # Send email notification for successful analysis run
         try:
             email_service.send_analysis_success_notification(
@@ -491,7 +467,6 @@ def water_plants_from_analysis(watering_date: Optional[str] = None):
             "garden_stats": stats,
             "daily_watering_stats": daily_stats,
             "print_result": print_result,
-            "notes_result": notes_result,
             "notes_save_result": notes_save_result,
         }
 
