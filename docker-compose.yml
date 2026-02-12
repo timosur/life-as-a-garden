@@ -6,35 +6,19 @@ services:
       context: ./nginx
       dockerfile: Dockerfile
     container_name: garden-nginx
-    environment:
-      - AUTH_USER=${AUTH_USER:-garden}
-      - AUTH_PASS=${AUTH_PASS:-changeme123}
     ports:
-      - "80:80"
-      - "443:443"
+      - "8899:80"
     depends_on:
       - backend
       - frontend
       - rmapi-wrapper
     restart: unless-stopped
-    volumes:
-      - /var/lib/garden/certbot/conf:/etc/letsencrypt
-      - /var/lib/garden/certbot/www:/var/www/certbot
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:80"]
       interval: 60s
       timeout: 10s
       retries: 3
       start_period: 10s
-
-  certbot:
-    image: certbot/certbot
-    container_name: garden-certbot
-    restart: unless-stopped
-    volumes:
-      - /var/lib/garden/certbot/conf:/etc/letsencrypt
-      - /var/lib/garden/certbot/www:/var/www/certbot
-    entrypoint: "/bin/sh -c 'trap exit TERM; while :; do certbot renew; sleep 12h & wait $!; done;'"
 
   postgres:
     image: postgres:16-alpine
@@ -97,8 +81,8 @@ services:
       - "8001"
     volumes:
       # Mount rmapi config and data directories
-      - /root/.config/rmapi:/root/.config/rmapi
-      - /root/rmapi:/tmp/rmapi
+      - ${HOME}/.config/rmapi/.config/rmapi:/root/.config/rmapi
+      - ${HOME}/.config/rmapi/rmapi:/tmp/rmapi
       # Mount temporary upload directory
       - /tmp/rmapi-uploads:/tmp/rmapi-uploads
     restart: unless-stopped

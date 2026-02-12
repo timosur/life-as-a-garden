@@ -10,3 +10,4 @@ backend/*.db
 # Environment files
 backend/.env
 garden/.env
+backup*
