@@ -1,18 +1,9 @@
 import type { GardenData, PlantStatusChangesResponse, NotesResponse } from "../types/garden";
 
-const getApiBaseUrl = () => {
-  if (window.location.hostname === "localhost") {
-    return "http://localhost:8000";
-  }
-  return `${window.location.protocol}//${window.location.host}`;
-};
-
-const API_BASE_URL = getApiBaseUrl();
-
 export const GardenApiService = {
   async getGardenData(): Promise<GardenData | null> {
     try {
-      const response = await fetch(`${API_BASE_URL}/api/garden`);
+      const response = await fetch(`/api/garden`);
       if (!response.ok) {
         throw new Error("Failed to fetch garden data");
       }
@@ -33,7 +24,7 @@ export const GardenApiService = {
       if (plantId) params.append("plant_id", plantId.toString());
       if (limit) params.append("limit", limit.toString());
 
-      const url = `${API_BASE_URL}/api/garden/plant-status-changes${params.toString() ? "?" + params.toString() : ""
+      const url = `/api/garden/plant-status-changes${params.toString() ? "?" + params.toString() : ""
         }`;
       const response = await fetch(url);
 
@@ -49,7 +40,7 @@ export const GardenApiService = {
 
   async getTodaysChanges(): Promise<PlantStatusChangesResponse | null> {
     try {
-      const response = await fetch(`${API_BASE_URL}/api/garden/plant-status-changes/today`);
+      const response = await fetch(`/api/garden/plant-status-changes/today`);
 
       if (!response.ok) {
         throw new Error("Failed to fetch today's plant status changes");
@@ -63,7 +54,7 @@ export const GardenApiService = {
 
   async getAllNotes(): Promise<NotesResponse | null> {
     try {
-      const response = await fetch(`${API_BASE_URL}/api/notes`);
+      const response = await fetch(`/api/notes`);
       if (!response.ok) {
         throw new Error("Failed to fetch notes");
       }
@@ -76,7 +67,7 @@ export const GardenApiService = {
 
   async getNotesByDate(date: string): Promise<NotesResponse | null> {
     try {
-      const response = await fetch(`${API_BASE_URL}/api/notes/date/${date}`);
+      const response = await fetch(`/api/notes/date/${date}`);
       if (!response.ok) {
         throw new Error("Failed to fetch notes for date");
       }
@@ -89,7 +80,7 @@ export const GardenApiService = {
 
   async getNotesByDateRange(startDate: string, endDate: string): Promise<NotesResponse | null> {
     try {
-      const response = await fetch(`${API_BASE_URL}/api/notes/range/${startDate}/${endDate}`);
+      const response = await fetch(`/api/notes/range/${startDate}/${endDate}`);
       if (!response.ok) {
         throw new Error("Failed to fetch notes for date range");
       }
@@ -104,7 +95,7 @@ export const GardenApiService = {
     noteId: number
   ): Promise<{ success: boolean; message?: string; error?: string }> {
     try {
-      const response = await fetch(`${API_BASE_URL}/api/notes/${noteId}`, {
+      const response = await fetch(`/api/notes/${noteId}`, {
         method: "DELETE",
       });
       if (!response.ok) {
@@ -122,7 +113,7 @@ export const GardenApiService = {
     content: string
   ): Promise<{ success: boolean; message?: string; error?: string }> {
     try {
-      const response = await fetch(`${API_BASE_URL}/api/notes/${noteId}`, {
+      const response = await fetch(`/api/notes/${noteId}`, {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
@@ -152,7 +143,7 @@ export const GardenApiService = {
     };
   }> {
     try {
-      const response = await fetch(`${API_BASE_URL}/api/notes`, {
+      const response = await fetch(`/api/notes`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -194,7 +185,7 @@ export const GardenApiService = {
     }>
   ): Promise<{ success: boolean; message?: string; error?: string }> {
     try {
-      const response = await fetch(`${API_BASE_URL}/api/garden/plants/${plantId}`, {
+      const response = await fetch(`/api/garden/plants/${plantId}`, {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
@@ -241,7 +232,7 @@ export const GardenApiService = {
     };
   }> {
     try {
-      const response = await fetch(`${API_BASE_URL}/api/garden/plants`, {
+      const response = await fetch(`/api/garden/plants`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -270,7 +261,7 @@ export const GardenApiService = {
     plantId: number
   ): Promise<{ success: boolean; message?: string; error?: string }> {
     try {
-      const response = await fetch(`${API_BASE_URL}/api/garden/plants/${plantId}`, {
+      const response = await fetch(`/api/garden/plants/${plantId}`, {
         method: "DELETE",
       });
 
@@ -292,7 +283,7 @@ export const GardenApiService = {
     newArealId: string
   ): Promise<{ success: boolean; message?: string; error?: string }> {
     try {
-      const response = await fetch(`${API_BASE_URL}/api/garden/plants/${plantId}`, {
+      const response = await fetch(`/api/garden/plants/${plantId}`, {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
@@ -324,7 +315,7 @@ export const GardenApiService = {
     }>
   ): Promise<{ success: boolean; message?: string; error?: string }> {
     try {
-      const response = await fetch(`${API_BASE_URL}/api/garden/areals/${arealId}`, {
+      const response = await fetch(`/api/garden/areals/${arealId}`, {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
@@ -353,7 +344,7 @@ export const GardenApiService = {
     size: string;
   }): Promise<{ success: boolean; message?: string; error?: string }> {
     try {
-      const response = await fetch(`${API_BASE_URL}/api/garden/areals`, {
+      const response = await fetch(`/api/garden/areals`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -378,7 +369,7 @@ export const GardenApiService = {
     arealId: string
   ): Promise<{ success: boolean; message?: string; error?: string }> {
     try {
-      const response = await fetch(`${API_BASE_URL}/api/garden/areals/${arealId}`, {
+      const response = await fetch(`/api/garden/areals/${arealId}`, {
         method: "DELETE",
       });
 
@@ -412,7 +403,7 @@ export const GardenApiService = {
   }> {
     try {
       const response = await fetch(
-        `${API_BASE_URL}/api/garden/watering/calendar/${startDate}/${endDate}`
+        `/api/garden/watering/calendar/${startDate}/${endDate}`
       );
 
       if (!response.ok) {

@@ -196,8 +196,8 @@ def upload_and_rename_garden_to_remarkable(pdf_path: str) -> bool:
 
         try:
             mv_result = client.mv(
-                "Journal/Lebensgarten/Lebensgarten",
-                f"Journal/Lebensgarten/Archiv/{current_date}",
+                "/Lebensgarten/Lebensgarten",
+                f"/Lebensgarten/Archiv/{current_date}",
             )
 
             if mv_result.get("success"):
@@ -214,7 +214,7 @@ def upload_and_rename_garden_to_remarkable(pdf_path: str) -> bool:
         # Step 2: Upload the new PDF
         print("📤 Uploading new PDF to reMarkable...")
 
-        put_result = client.put(pdf_path, "/Journal/Lebensgarten")
+        put_result = client.put(pdf_path, "/Lebensgarten")
 
         if put_result.get("success"):
             print("✅ PDF uploaded successfully to reMarkable!")
@@ -275,7 +275,7 @@ def delete_and_upload_garden_remarkable(pdf_path: str) -> dict:
         # Step 1: Try to remove existing Lebensgarten file
         print("🗑️ Attempting to remove existing Lebensgarten file...")
         try:
-            rm_result = client.rm("Journal/Lebensgarten/Lebensgarten")
+            rm_result = client.rm("/Lebensgarten/Lebensgarten")
 
             if rm_result.get("success"):
                 print("✅ Existing Lebensgarten file removed successfully")
@@ -291,7 +291,7 @@ def delete_and_upload_garden_remarkable(pdf_path: str) -> dict:
         # Step 2: Upload the new PDF
         print("📤 Uploading new PDF to reMarkable...")
 
-        put_result = client.put(pdf_path, "/Journal/Lebensgarten")
+        put_result = client.put(pdf_path, "/Lebensgarten")
 
         if put_result.get("success"):
             print("✅ PDF uploaded successfully to reMarkable!")
@@ -337,7 +337,7 @@ def upload_notes_to_remarkable(pdf_path: str) -> dict:
         # Step 1: Try to remove existing Notes file
         print("🗑️ Attempting to remove existing Notes file...")
         try:
-            rm_result = client.rm("Journal/Lebensgarten/Notes")
+            rm_result = client.rm("/Lebensgarten/Notes")
 
             if rm_result.get("success"):
                 print("✅ Existing Notes file removed successfully")
@@ -351,7 +351,7 @@ def upload_notes_to_remarkable(pdf_path: str) -> dict:
         # Step 2: Upload the new Notes PDF
         print("📤 Uploading new Notes PDF to reMarkable...")
 
-        put_result = client.put(pdf_path, "/Journal/Lebensgarten")
+        put_result = client.put(pdf_path, "/Lebensgarten")
 
         if put_result.get("success"):
             print("✅ Notes PDF uploaded successfully to reMarkable!")
