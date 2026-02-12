@@ -1,92 +1,85 @@
 """Repository for managing areals in the garden database."""
 
-import sqlite3
-from typing import List, Dict, Any
-from ..base import DatabaseConnection
+from typing import List, Dict, Any, Optional
+from datetime import datetime
+from sqlmodel import select
+from ..models import Areal
+from ..base import get_session
 
 
 class ArealRepository:
     """Repository for areal-related database operations."""
 
-    def __init__(self, db_connection: DatabaseConnection):
-        """Initialize with database connection."""
-        self.db = db_connection
-
     def insert_areal(self, areal_data: Dict[str, Any]) -> bool:
-        """Insert an areal into the database."""
+        """Insert or replace an areal."""
         try:
-            with self.db.get_connection() as conn:
-                conn.execute(
-                    """
-                    INSERT OR REPLACE INTO areals 
-                    (id, name, horizontal_pos, vertical_pos, size)
-                    VALUES (?, ?, ?, ?, ?)
-                """,
-                    (
-                        areal_data["id"],
-                        areal_data["name"],
-                        areal_data["horizontalPos"],
-                        areal_data["verticalPos"],
-                        areal_data["size"],
-                    ),
-                )
+            with get_session() as session:
+                existing = session.get(Areal, areal_data["id"])
+                if existing:
+                    existing.name = areal_data["name"]
+                    existing.horizontal_pos = areal_data["horizontalPos"]
+                    existing.vertical_pos = areal_data["verticalPos"]
+                    existing.size = areal_data["size"]
+                    existing.updated_at = datetime.utcnow()
+                else:
+                    areal = Areal(
+                        id=areal_data["id"],
+                        name=areal_data["name"],
+                        horizontal_pos=areal_data["horizontalPos"],
+                        vertical_pos=areal_data["verticalPos"],
+                        size=areal_data["size"],
+                    )
+                    session.add(areal)
+                session.commit()
                 return True
-        except sqlite3.Error as e:
+        except Exception as e:
             print(f"Error inserting areal: {e}")
             return False
 
     def get_all_areals(self) -> List[Dict[str, Any]]:
-        """Get all areals from the database."""
-        with self.db.get_connection() as conn:
-            cursor = conn.execute("SELECT * FROM areals ORDER BY name")
-            return [dict(row) for row in cursor.fetchall()]
+        """Get all areals ordered by name."""
+        with get_session() as session:
+            areals = session.exec(select(Areal).order_by(Areal.name)).all()
+            return [areal.model_dump() for areal in areals]
 
     def delete_areal(self, areal_id: str) -> bool:
-        """Delete an areal and all its plants from the database."""
+        """Delete an areal (cascades to plants)."""
         try:
-            with self.db.get_connection() as conn:
-                cursor = conn.execute("DELETE FROM areals WHERE id = ?", (areal_id,))
-                return cursor.rowcount > 0
-        except sqlite3.Error as e:
+            with get_session() as session:
+                areal = session.get(Areal, areal_id)
+                if not areal:
+                    return False
+                session.delete(areal)
+                session.commit()
+                return True
+        except Exception as e:
             print(f"Error deleting areal: {e}")
             return False
 
-    def get_areal_by_id(self, areal_id: str) -> Dict[str, Any] | None:
+    def get_areal_by_id(self, areal_id: str) -> Optional[Dict[str, Any]]:
         """Get a specific areal by ID."""
-        with self.db.get_connection() as conn:
-            cursor = conn.execute("SELECT * FROM areals WHERE id = ?", (areal_id,))
-            row = cursor.fetchone()
-            return dict(row) if row else None
+        with get_session() as session:
+            areal = session.get(Areal, areal_id)
+            return areal.model_dump() if areal else None
 
     def update_areal(self, areal_id: str, areal_data: dict) -> bool:
         """Update areal information with provided fields."""
         try:
-            # Build dynamic update query based on provided fields
-            update_fields = []
-            values = []
-
-            # Define allowed fields mapping
-            field_mapping = {
-                "name": "name",
-                "horizontal_pos": "horizontal_pos",
-                "vertical_pos": "vertical_pos",
-                "size": "size",
-            }
-
-            for field, value in areal_data.items():
-                if value is not None and field in field_mapping:
-                    update_fields.append(f"{field_mapping[field]} = ?")
-                    values.append(value)
-
-            if not update_fields:
-                return False
-
-            query = f"UPDATE areals SET {', '.join(update_fields)} WHERE id = ?"
-            values.append(areal_id)
-
-            with self.db.get_connection() as conn:
-                cursor = conn.execute(query, values)
-                return cursor.rowcount > 0
-        except sqlite3.Error as e:
+            allowed = {"name", "horizontal_pos", "vertical_pos", "size"}
+            with get_session() as session:
+                areal = session.get(Areal, areal_id)
+                if not areal:
+                    return False
+                updated = False
+                for field, value in areal_data.items():
+                    if value is not None and field in allowed:
+                        setattr(areal, field, value)
+                        updated = True
+                if not updated:
+                    return False
+                areal.updated_at = datetime.utcnow()
+                session.commit()
+                return True
+        except Exception as e:
             print(f"Error updating areal: {e}")
             return False

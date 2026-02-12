@@ -1,135 +1,99 @@
-"""Notes repository for handwritten text data."""
+"""Notes repository using SQLModel."""
 
-from typing import List, Dict, Any
-from datetime import date
-from database.base import DatabaseConnection
+from typing import List, Dict, Any, Optional
+from datetime import date, datetime
+from sqlmodel import select
+from ..models import Note
+from ..base import get_session
 
 
 class NotesRepository:
     """Repository for managing notes data."""
 
-    def __init__(self, db_connection: DatabaseConnection):
-        self.db = db_connection
-
     def create_note(self, content: str, extracted_at: date) -> int:
         """Create a new note entry."""
-        conn = self.db.get_connection()
-        cursor = conn.cursor()
-
-        cursor.execute(
-            """
-            INSERT INTO notes (content, extracted_at)
-            VALUES (?, ?)
-            """,
-            (content, extracted_at),
-        )
-
-        note_id = cursor.lastrowid
-        conn.commit()
-        return note_id
+        with get_session() as session:
+            note = Note(content=content, extracted_at=extracted_at)
+            session.add(note)
+            session.commit()
+            session.refresh(note)
+            return note.id
 
     def get_notes_by_date(self, date_filter: date) -> List[Dict[str, Any]]:
         """Get all notes for a specific date."""
-        conn = self.db.get_connection()
-        cursor = conn.cursor()
-
-        cursor.execute(
-            """
-            SELECT id, content, extracted_at, created_at, updated_at
-            FROM notes
-            WHERE extracted_at = ?
-            ORDER BY created_at DESC
-            """,
-            (date_filter,),
-        )
-
-        return [dict(row) for row in cursor.fetchall()]
+        with get_session() as session:
+            notes = session.exec(
+                select(Note)
+                .where(Note.extracted_at == date_filter)
+                .order_by(Note.created_at.desc())
+            ).all()
+            return [n.model_dump() for n in notes]
 
     def get_all_notes(self) -> List[Dict[str, Any]]:
         """Get all notes ordered by extraction date."""
-        conn = self.db.get_connection()
-        cursor = conn.cursor()
+        with get_session() as session:
+            notes = session.exec(
+                select(Note).order_by(Note.extracted_at.desc(), Note.created_at.desc())
+            ).all()
+            return [n.model_dump() for n in notes]
 
-        cursor.execute(
-            """
-            SELECT id, content, extracted_at, created_at, updated_at
-            FROM notes
-            ORDER BY extracted_at DESC, created_at DESC
-            """
-        )
-
-        return [dict(row) for row in cursor.fetchall()]
-
-    def get_note_by_id(self, note_id: int) -> Dict[str, Any] | None:
+    def get_note_by_id(self, note_id: int) -> Optional[Dict[str, Any]]:
         """Get a single note by ID."""
-        conn = self.db.get_connection()
-        cursor = conn.cursor()
-
-        cursor.execute(
-            """
-            SELECT id, content, extracted_at, created_at, updated_at
-            FROM notes
-            WHERE id = ?
-            """,
-            (note_id,),
-        )
-
-        row = cursor.fetchone()
-        return dict(row) if row else None
+        with get_session() as session:
+            note = session.get(Note, note_id)
+            return note.model_dump() if note else None
 
     def get_notes_by_date_range(
         self, start_date: date, end_date: date
     ) -> List[Dict[str, Any]]:
         """Get notes within a date range."""
-        conn = self.db.get_connection()
-        cursor = conn.cursor()
-
-        cursor.execute(
-            """
-            SELECT id, content, extracted_at, created_at, updated_at
-            FROM notes
-            WHERE extracted_at BETWEEN ? AND ?
-            ORDER BY extracted_at DESC, created_at DESC
-            """,
-            (start_date, end_date),
-        )
-
-        return [dict(row) for row in cursor.fetchall()]
+        with get_session() as session:
+            notes = session.exec(
+                select(Note)
+                .where(Note.extracted_at >= start_date, Note.extracted_at <= end_date)
+                .order_by(Note.extracted_at.desc(), Note.created_at.desc())
+            ).all()
+            return [n.model_dump() for n in notes]
 
     def update_note(self, note_id: int, content: str) -> bool:
         """Update note content."""
-        conn = self.db.get_connection()
-        cursor = conn.cursor()
-
-        cursor.execute(
-            """
-            UPDATE notes 
-            SET content = ?, updated_at = CURRENT_TIMESTAMP
-            WHERE id = ?
-            """,
-            (content, note_id),
-        )
-
-        conn.commit()
-        return cursor.rowcount > 0
+        with get_session() as session:
+            note = session.get(Note, note_id)
+            if not note:
+                return False
+            note.content = content
+            note.updated_at = datetime.utcnow()
+            session.commit()
+            return True
 
     def delete_note(self, note_id: int) -> bool:
         """Delete a note."""
-        conn = self.db.get_connection()
-        cursor = conn.cursor()
-
-        cursor.execute("DELETE FROM notes WHERE id = ?", (note_id,))
-        conn.commit()
-        return cursor.rowcount > 0
+        with get_session() as session:
+            note = session.get(Note, note_id)
+            if not note:
+                return False
+            session.delete(note)
+            session.commit()
+            return True
 
     def note_exists_for_date(self, date_filter: date) -> bool:
         """Check if a note already exists for a specific date."""
-        conn = self.db.get_connection()
-        cursor = conn.cursor()
+        with get_session() as session:
+            from sqlmodel import func
 
-        cursor.execute(
-            "SELECT COUNT(*) FROM notes WHERE extracted_at = ?", (date_filter,)
-        )
+            count = session.exec(
+                select(func.count())
+                .select_from(Note)
+                .where(Note.extracted_at == date_filter)
+            ).one()
+            return count > 0
 
-        count = cursor.fetchone()[0]
-        return count > 0
+    def get_latest_note(self) -> Optional[Dict[str, Any]]:
+        """Get the most recently extracted note."""
+        with get_session() as session:
+            note = session.exec(
+                select(Note)
+                .order_by(Note.extracted_at.desc(), Note.created_at.desc())
+                .limit(1)
+            ).first()
+            return note.model_dump() if note else None

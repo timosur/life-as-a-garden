@@ -5,3 +5,5 @@ requests
 alembic
 httpx
 psutil
+sqlmodel
+psycopg2-binary

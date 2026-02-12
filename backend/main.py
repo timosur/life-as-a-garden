@@ -80,7 +80,7 @@ app = FastAPI(
 )
 
 # Initialize the database
-garden_db = GardenDatabase("db/garden.db")
+garden_db = GardenDatabase()
 
 # Initialize health checker
 health_checker = create_health_checker(garden_db)
@@ -653,14 +653,11 @@ def get_watering_calendar(start_date: str, end_date: str):
 def get_all_watering_history():
     """Debug endpoint to get all watering history."""
     try:
-        # Get all watering history without filters
-        from backend.database.repositories.watering import WateringRepository
-        from backend.database.base import DatabaseConnection
-        
-        db = DatabaseConnection()
-        watering_repo = WateringRepository(db)
+        from database.repositories.watering import WateringRepository
+
+        watering_repo = WateringRepository()
         history = watering_repo.get_watering_history()
-        
+
         return {
             "success": True,
             "watering_history": history,

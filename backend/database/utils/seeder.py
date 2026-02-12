@@ -1,60 +1,58 @@
 """Data seeding utilities for initializing the garden database."""
 
-import sqlite3
 from typing import Dict, Any
-from ..base import DatabaseConnection
 from ..repositories import ArealRepository, PlantRepository
+from ..base import get_session
+from ..models import Areal
+from sqlmodel import select, func
 
 
 class DataSeeder:
     """Utility class for seeding the database with initial garden data."""
 
-    def __init__(self, db_connection: DatabaseConnection):
-        """Initialize with database connection."""
-        self.db = db_connection
-        self.areal_repo = ArealRepository(db_connection)
-        self.plant_repo = PlantRepository(db_connection)
+    def __init__(self):
+        self.areal_repo = ArealRepository()
+        self.plant_repo = PlantRepository()
 
     def seed_initial_data(self) -> bool:
         """Seed the database with initial garden data if it's empty."""
         try:
-            with self.db.get_connection() as conn:
-                # Check if database is empty (no areals exist)
-                areal_count = conn.execute("SELECT COUNT(*) FROM areals").fetchone()[0]
-
+            with get_session() as session:
+                areal_count = session.exec(
+                    select(func.count()).select_from(Areal)
+                ).one()
                 if areal_count > 0:
                     print("Database already contains data, skipping seeding.")
                     return True
 
-                print("Seeding database with initial garden data...")
+            print("Seeding database with initial garden data...")
+            garden_data = self._get_initial_garden_data()
 
-                # Initial garden data
-                garden_data = self._get_initial_garden_data()
-
-                # Insert areals and plants
-                for areal_data in garden_data["areals"]:
-                    # Insert areal
-                    if not self.areal_repo.insert_areal(areal_data):
-                        print(f"Failed to insert areal: {areal_data['name']}")
+            for areal_data in garden_data["areals"]:
+                if not self.areal_repo.insert_areal(areal_data):
+                    print(f"Failed to insert areal: {areal_data['name']}")
+                    return False
+                for plant_data in areal_data["plants"]:
+                    if not self.plant_repo.insert_plant(areal_data["id"], plant_data):
+                        print(f"Failed to insert plant: {plant_data['name']}")
                         return False
 
-                    # Insert plants for this areal
-                    for plant_data in areal_data["plants"]:
-                        if not self.plant_repo.insert_plant(
-                            areal_data["id"], plant_data
-                        ):
-                            print(f"Failed to insert plant: {plant_data['name']}")
-                            return False
+            # Seed default watering config
+            from ..models import DailyWateringConfig
 
-                print("Database seeded successfully with initial garden data.")
-                return True
+            with get_session() as session:
+                config = session.get(DailyWateringConfig, 1)
+                if not config:
+                    session.add(DailyWateringConfig(id=1, max_plants_per_day=4))
+                    session.commit()
 
-        except sqlite3.Error as e:
+            print("Database seeded successfully with initial garden data.")
+            return True
+        except Exception as e:
             print(f"Error seeding database: {e}")
             return False
 
     def _get_initial_garden_data(self) -> Dict[str, Any]:
-        """Get the initial garden data structure."""
         return {
             "areals": [
                 {
@@ -279,5 +277,5 @@ class DataSeeder:
                         },
                     ],
                 },
-            ]
+            ],
         }

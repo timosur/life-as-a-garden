@@ -1,26 +1,47 @@
 """
 Garden Database Package
 
-Refactored modular database package for the garden application.
-Provides the same interface as before while using a clean, maintainable structure.
+Modular database package using SQLModel ORM + PostgreSQL.
 """
 
-# Main database class for backward compatibility
 from .garden_database import GardenDatabase
-
-# Individual components for advanced usage
-from .base import DatabaseConnection
-from .repositories import ArealRepository, PlantRepository, WateringRepository
-from .services import GardenService, WateringService
+from .base import get_session, engine, init_db
+from .models import (
+    Areal,
+    Plant,
+    WateringHistory,
+    DailyWateringConfig,
+    PlantStatusChange,
+    DailyUpdateTracker,
+    Note,
+)
+from .repositories import (
+    ArealRepository,
+    PlantRepository,
+    WateringRepository,
+    NotesRepository,
+)
+from .services import GardenService, WateringService, NotesService
 from .utils import DataSeeder
 
 __all__ = [
     "GardenDatabase",
-    "DatabaseConnection",
+    "get_session",
+    "engine",
+    "init_db",
+    "Areal",
+    "Plant",
+    "WateringHistory",
+    "DailyWateringConfig",
+    "PlantStatusChange",
+    "DailyUpdateTracker",
+    "Note",
     "ArealRepository",
     "PlantRepository",
     "WateringRepository",
+    "NotesRepository",
     "GardenService",
     "WateringService",
+    "NotesService",
     "DataSeeder",
 ]
