@@ -50,7 +50,7 @@ services:
     environment:
       - PYTHONPATH=/app
       - PYTHONUNBUFFERED=1
-      - FRONTEND_URL=http://frontend:80
+      - FRONTEND_URL=http://nginx:80
       - RMAPI_SERVICE_URL=http://rmapi-wrapper:8001
       - DATABASE_URL=postgresql://garden:garden@postgres:5432/garden
     env_file:
@@ -80,9 +80,8 @@ services:
     expose:
       - "8001"
     volumes:
-      # Mount rmapi config and data directories
-      - ${HOME}/.config/rmapi/.config/rmapi:/root/.config/rmapi
-      - ${HOME}/.config/rmapi/rmapi:/tmp/rmapi
+      # Mount rmapi config directory
+      - ${HOME}/.config/rmapi:/root/.config/rmapi
       # Mount temporary upload directory
       - /tmp/rmapi-uploads:/tmp/rmapi-uploads
     restart: unless-stopped

@@ -24,15 +24,25 @@ COPY --from=builder /install /usr/local
 # Install only runtime system dependencies in a single layer
 RUN apt-get update && apt-get install -y --no-install-recommends \
   imagemagick \
+  ghostscript \
   inkscape \
   libgbm1 \
   libasound2 \
+  unzip \
   libpq5 \
   ca-certificates \
   curl \
   && rm -rf /var/lib/apt/lists/*
 
-# Relax the PDF/PS/EPS/XPS ImageMagick policy
+# Install Playwright Chromium
+RUN playwright install chromium && \
+  rm -rf /var/lib/apt/lists/* && \
+  apt-get clean && \
+  apt-get update && \
+  playwright install-deps chromium && \
+  rm -rf /var/lib/apt/lists/*
+
+# Relax ImageMagick policy AFTER playwright install-deps (which can overwrite policy.xml)
 RUN set -eux; \
   POLICY_FILE=""; \
   if [ -f /etc/ImageMagick-7/policy.xml ]; then POLICY_FILE=/etc/ImageMagick-7/policy.xml; \
@@ -40,13 +50,9 @@ RUN set -eux; \
   elif [ -f /etc/ImageMagick/policy.xml ]; then POLICY_FILE=/etc/ImageMagick/policy.xml; \
   fi; \
   if [ -n "$POLICY_FILE" ]; then \
-  sed -i -E 's/rights="none" pattern="(PDF|PS|EPS|XPS)"/rights="read|write" pattern="\1"/g' "$POLICY_FILE" || true; \
+  sed -i -E 's/rights="none" pattern="(PDF|PS|EPS|XPS)"/rights="read|write" pattern="\1"/g' "$POLICY_FILE"; \
+  cat "$POLICY_FILE"; \
   fi
-
-# Install Playwright Chromium (large + stable — cached unless pip deps change)
-RUN playwright install chromium && \
-  playwright install-deps chromium && \
-  rm -rf /var/lib/apt/lists/*
 
 # Copy application code (changes most often — last for best caching)
 COPY . .
