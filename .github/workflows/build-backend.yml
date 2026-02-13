@@ -1,11 +1,15 @@
-name: Build and Push Docker Images
+name: Build and Push Backend
 
 on:
   push:
     branches: [main]
+    paths:
+      - "backend/**"
   pull_request:
     branches: [main]
-  workflow_dispatch: # Allow manual triggering
+    paths:
+      - "backend/**"
+  workflow_dispatch:
 
 env:
   REGISTRY: ghcr.io
@@ -17,23 +21,6 @@ jobs:
     permissions:
       contents: read
       packages: write
-
-    strategy:
-      matrix:
-        service: [backend, frontend, rmapi-wrapper]
-        include:
-          - service: backend
-            dockerfile: ./backend/Dockerfile
-            context: ./backend
-            image_name: backend
-          - service: frontend
-            dockerfile: ./garden/Dockerfile
-            context: ./garden
-            image_name: frontend
-          - service: rmapi-wrapper
-            dockerfile: ./rmapi-wrapper/Dockerfile
-            context: ./rmapi-wrapper
-            image_name: rmapi-wrapper
 
     steps:
       - name: Checkout repository
@@ -53,7 +40,7 @@ jobs:
         id: meta
         uses: docker/metadata-action@v5
         with:
-          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}/${{ matrix.image_name }}
+          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}/backend
           tags: |
             type=ref,event=branch
             type=ref,event=pr
@@ -63,12 +50,9 @@ jobs:
       - name: Build and push Docker image
         uses: docker/build-push-action@v5
         with:
-          context: ${{ matrix.context }}
-          file: ${{ matrix.dockerfile }}
+          context: ./backend
+          file: ./backend/Dockerfile
           push: true
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
           platforms: linux/amd64,linux/arm64
-
-      - name: Output image digest
-        run: echo ${{ steps.build.outputs.digest }}
