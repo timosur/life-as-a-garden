@@ -1,73 +1,73 @@
 # Life as a Garden (LaaG)
 
-Ein automatisiertes System zur Pflege und Überwachung deines Gartens mit KI-gestützter Bildanalyse und intelligenten Benachrichtigungen.
+An automated system for maintaining and monitoring your garden with AI-powered image analysis and smart notifications.
 
 ## 🌱 Features
 
-- **KI-Bildanalyse**: Automatische Erkennung von bewässerungsbedürftigen Pflanzen
-- **Automatische Bewässerung**: Intelligente Bewässerungslogik basierend auf Pflanzentyp und -zustand
-- **PDF-Generierung**: Automatische Erstellung von Garten-Statusberichten
-- **reMarkable Integration**: Upload der Berichte zu deinem reMarkable Tablet
-- **E-Mail Benachrichtigungen**: Automatische Benachrichtigungen bei erfolgreichen Analysen und Systemfehlern
-- **Health Monitoring**: Umfassende Systemüberwachung mit Frühwarnsystem
-- **Web-Dashboard**: React-basierte Benutzeroberfläche zur Gartenverwaltung
+- **AI Image Analysis**: Automatic detection of plants needing watering
+- **Automatic Watering**: Intelligent watering logic based on plant type and condition
+- **PDF Generation**: Automatic creation of garden status reports
+- **reMarkable Integration**: Upload reports to your reMarkable tablet
+- **Email Notifications**: Automatic notifications for successful analyses and system errors
+- **Health Monitoring**: Comprehensive system monitoring with early warning system
+- **Web Dashboard**: React-based user interface for garden management
 
-## 📧 E-Mail Benachrichtigungen
+## 📧 Email Notifications
 
-Das System sendet automatisch E-Mail-Benachrichtigungen für:
+The system automatically sends email notifications for:
 
-- ✅ **Erfolgreiche nächtliche Analysen** mit Garten-Statistiken
-- ⚠️ **Health Check Fehler** mit detaillierter Fehlerdiagnose
-- 💧 **Bewässerungs-Updates** nach automatischen Zyklen
+- ✅ **Successful nightly analyses** with garden statistics
+- ⚠️ **Health check errors** with detailed error diagnostics
+- 💧 **Watering updates** after automatic cycles
 
 ## 🚀 Quick Start
 
-1. **Repository klonen**:
+1. **Clone the repository**:
 
    ```bash
    git clone https://github.com/timosur/life-as-a-garden.git
    cd life-as-a-garden
    ```
 
-2. **Umgebungsvariablen konfigurieren**:
+2. **Configure environment variables**:
 
    ```bash
    cp backend/.env.example backend/.env
-   # Bearbeite backend/.env mit deinen API-Schlüsseln und E-Mail-Einstellungen
+   # Edit backend/.env with your API keys and email settings
 
    cp .env.example .env
-   # Bearbeite .env mit deinen Basic Auth Zugangsdaten
+   # Edit .env with your basic auth credentials
    ```
 
-3. **Basic Authentication einrichten**:
+3. **Set up basic authentication**:
 
    ```bash
-   # Setze sichere Zugangsdaten in .env
+   # Set secure credentials in .env
    AUTH_USER=your-username
    AUTH_PASS=your-secure-password
    ```
 
-4. **System starten**:
+4. **Start the system**:
 
    ```bash
    docker-compose up -d --build
    ```
 
-5. **E-Mail-Konfiguration testen**:
+5. **Test email configuration**:
 
    ```bash
    curl -X POST http://localhost:8000/api/notifications/test-email
    ```
 
-## 🔧 Konfiguration
+## 🔧 Configuration
 
-Siehe [E-Mail Benachrichtigungen](backend/EMAIL_NOTIFICATIONS.md) für detaillierte Konfigurationsanleitungen.
+See [Email Notifications](backend/EMAIL_NOTIFICATIONS.md) for detailed configuration instructions.
 
-Für GitHub Deployment siehe [GitHub Secrets](/.github/SECRETS.md).
+For GitHub deployment, see [GitHub Secrets](/.github/SECRETS.md).
 
-## 📱 Automatischer Zeitplan
+## 📱 Automatic Schedule
 
-- **Täglich 01:00 Uhr**: Automatische Analyse und Bewässerung
-- **Kontinuierlich**: Health Check Überwachung mit E-Mail-Alerts
+- **Daily at 01:00**: Automatic analysis and watering
+- **Continuous**: Health check monitoring with email alerts
 
 This is my life as a garden (LaaG)

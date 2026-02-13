@@ -1,8 +1,8 @@
 # Deployment Guide
 
-## Automatisches Deployment via GitHub Actions
+## Automatic Deployment via GitHub Actions
 
-Das Repository ist für automatisches Deployment mit GitHub Actions konfiguriert.
+The repository is configured for automatic deployment with GitHub Actions.
 
 ### Services Routing
 
@@ -10,43 +10,43 @@ Das Repository ist für automatisches Deployment mit GitHub Actions konfiguriert
 - `https://garden.timosur.com/api/` → Backend
 - `https://garden.timosur.com/rmapi/` → rmapi-wrapper
 
-### Erstmaliges Setup
+### Initial Setup
 
-1. **Server vorbereiten:**
+1. **Prepare the server:**
 
    ```bash
-   # Domain DNS auf Server IP zeigen lassen
-   # Port 80 und 443 in Firewall öffnen
+   # Point domain DNS to server IP
+   # Open ports 80 and 443 in the firewall
    ```
 
-2. **GitHub Secrets konfigurieren:**
-   Die folgenden Secrets müssen in den GitHub Repository Settings konfiguriert werden:
+2. **Configure GitHub Secrets:**
+   The following secrets must be set in the GitHub repository settings:
 
    - `OPENAI_API_KEY`
    - `SMTP_USERNAME`
    - `SMTP_PASSWORD`
 
-3. **Self-hosted Runner einrichten:**
-   Auf dem Zielserver einen GitHub Actions Self-hosted Runner einrichten.
+3. **Set up self-hosted runner:**
+   Set up a GitHub Actions self-hosted runner on the target server.
 
-4. **Automatisches Deployment:**
-   Bei jedem Push auf den `main` Branch wird automatisch deployed:
-   - SSL-Zertifikate werden beim ersten Deployment automatisch initialisiert
-   - Services werden gebaut und gestartet
-   - Bei nachfolgenden Deployments werden existierende Zertifikate wiederverwendet
+4. **Automatic deployment:**
+   On every push to the `main` branch, deployment happens automatically:
+   - SSL certificates are initialized automatically on first deployment
+   - Services are built and started
+   - On subsequent deployments, existing certificates are reused
 
-### Manuelles Deployment
+### Manual Deployment
 
-Falls du manuell deployen möchtest:
+If you want to deploy manually:
 
-1. **Repository clonen:**
+1. **Clone the repository:**
 
    ```bash
    git clone <repository-url>
    cd life-as-a-garden
    ```
 
-2. **Environment Files erstellen:**
+2. **Create environment files:**
 
    ```bash
    # Backend .env
@@ -66,20 +66,20 @@ Falls du manuell deployen möchtest:
    EOF
    ```
 
-3. **SSL-Zertifikate initialisieren (nur beim ersten Mal):**
+3. **Initialize SSL certificates (only the first time):**
 
    ```bash
    chmod +x init-letsencrypt.sh
    ./init-letsencrypt.sh
    ```
 
-4. **Services starten:**
+4. **Start services:**
 
    ```bash
    docker-compose up -d --build
    ```
 
-### Updates deployen:
+### Deploy updates:
 
 ```bash
 git pull
@@ -87,38 +87,38 @@ docker-compose build --no-cache
 docker-compose up -d
 ```
 
-### Logs anschauen:
+### View logs:
 
 ```bash
-# Alle Services
+# All services
 docker-compose logs -f
 
-# Spezifische Services
+# Specific services
 docker-compose logs -f nginx
 docker-compose logs -f backend
 docker-compose logs -f frontend
 docker-compose logs -f rmapi-wrapper
 ```
 
-### SSL-Zertifikat erneuern:
+### Renew SSL certificate:
 
-Das Zertifikat wird automatisch alle 12 Stunden durch den certbot Container überprüft und erneuert.
+The certificate is automatically checked and renewed every 12 hours by the certbot container.
 
-Manuell erneuern:
+Manual renewal:
 
 ```bash
 docker-compose exec certbot certbot renew
 docker-compose exec nginx nginx -s reload
 ```
 
-## Lokale Entwicklung
+## Local Development
 
-Für die lokale Entwicklung kannst du die Services direkt starten, ohne Docker Compose zu verwenden.
+For local development, you can start the services directly without using Docker Compose.
 
-Falls du doch Docker Compose lokal nutzen möchtest, verwende die `nginx.dev.conf` für HTTP ohne SSL:
+If you want to use Docker Compose locally, use `nginx.dev.conf` for HTTP without SSL:
 
 ```bash
-# In docker-compose.yml die nginx volumes anpassen:
+# In docker-compose.yml, adjust the nginx volumes:
 volumes:
   - ./nginx/nginx.dev.conf:/etc/nginx/nginx.conf
   - ./certbot/conf:/etc/letsencrypt
