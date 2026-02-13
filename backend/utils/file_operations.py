@@ -11,7 +11,7 @@ def download_from_remarkable() -> Dict[str, Any]:
 
     try:
         client = RmapiClient()
-        result = client.geta("Journal/Lebensgarten/Lebensgarten")
+        result = client.geta("Lebensgarten/Lebensgarten")
 
         print(f"📊 Download result: {result.get('success', False)}")
         if result.get("local_file_path"):

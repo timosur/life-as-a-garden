@@ -13,7 +13,6 @@ from utils.pdf_generator import (
 )
 from utils.rmapi_client import (
     archive_and_upload_garden_remarkable,
-    upload_notes_to_remarkable,
     delete_and_upload_garden_remarkable,
 )
 from settings import settings
@@ -296,7 +295,6 @@ def print_garden():
 
         # Upload to reMarkable
         upload_result = delete_and_upload_garden_remarkable(garden_pdf_path)
-        notes_upload_result = upload_notes_to_remarkable(notes_pdf_path)
 
         return {
             "success": True,
@@ -304,7 +302,6 @@ def print_garden():
             "garden_pdf_path": garden_pdf_path,
             "notes_pdf_path": notes_pdf_path,
             "upload_result": upload_result,
-            "notes_upload_result": notes_upload_result,
         }
     except Exception as e:
         return {"success": False, "error": f"Failed to print garden: {str(e)}"}
