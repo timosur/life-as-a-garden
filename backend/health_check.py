@@ -10,14 +10,15 @@ Provides comprehensive health checks for all system components including:
 """
 
 import httpx
-import sqlite3
 import openai
 from datetime import datetime
 from fastapi import HTTPException
 from fastapi.responses import JSONResponse
 from typing import Dict, Any
+from sqlmodel import text
 
 from database import GardenDatabase
+from database.base import get_session
 from settings import settings
 
 
@@ -93,15 +94,16 @@ class HealthChecker:
             print(f"Failed to send health check notification: {str(e)}")
 
     async def _check_database(self, health_status: Dict[str, Any]) -> None:
-        """Check database connectivity and basic operations."""
+        """Check PostgreSQL database connectivity and basic operations."""
         try:
-            # Test database connection
-            connection = sqlite3.connect("db/garden.db")
-            cursor = connection.cursor()
-            cursor.execute("SELECT COUNT(*) FROM sqlite_master WHERE type='table'")
-            table_count = cursor.fetchone()[0]
-            cursor.close()
-            connection.close()
+            # Test database connection via SQLModel session
+            with get_session() as session:
+                result = session.exec(
+                    text(
+                        "SELECT COUNT(*) FROM information_schema.tables WHERE table_schema = 'public'"
+                    )
+                ).one()
+                table_count = result
 
             # Test database operations through our service
             stats = self.garden_db.get_database_stats()
@@ -109,6 +111,7 @@ class HealthChecker:
             health_status["services"]["database"] = {
                 "status": "healthy",
                 "details": {
+                    "type": "postgresql",
                     "tables_count": table_count,
                     "total_plants": stats.get("total_plants", 0),
                     "total_areals": stats.get("total_areals", 0),
@@ -226,7 +229,7 @@ class HealthChecker:
             import os
 
             # Check critical directories
-            critical_dirs = ["db", "input", "output"]
+            critical_dirs = ["input", "output"]
             file_system_details = {}
 
             for dir_name in critical_dirs:
