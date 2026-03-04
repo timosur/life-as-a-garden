@@ -1,7 +1,37 @@
 import asyncio
+import aiohttp
 from pathlib import Path
 from playwright.async_api import async_playwright
 from settings import settings
+
+# Backend URL for direct API access (bypasses nginx auth/rate-limiting)
+BACKEND_DIRECT_URL = "http://localhost:8000"
+
+
+async def _proxy_api_request(route, backend_url: str):
+    """Intercept browser API calls and forward directly to the backend, bypassing nginx."""
+    request = route.request
+    path = request.url.split("/api/", 1)[1]
+    target_url = f"{backend_url}/api/{path}"
+
+    try:
+        async with aiohttp.ClientSession() as session:
+            async with session.request(
+                method=request.method,
+                url=target_url,
+                headers={k: v for k, v in request.headers.items() if k.lower() not in ("host",)},
+                data=request.post_data if request.method != "GET" else None,
+                timeout=aiohttp.ClientTimeout(total=30),
+            ) as resp:
+                body = await resp.read()
+                await route.fulfill(
+                    status=resp.status,
+                    headers=dict(resp.headers),
+                    body=body,
+                )
+    except Exception as e:
+        print(f"❌ API proxy failed for {target_url}: {e}")
+        await route.abort("connectionrefused")
 
 
 async def print_to_pdf(
@@ -18,7 +48,6 @@ async def print_to_pdf(
     Returns:
         str: The absolute path to the generated PDF file
     """
-    # Use settings default if no URL provided
     if url is None:
         url = settings.frontend_base_url
 
@@ -26,8 +55,9 @@ async def print_to_pdf(
     output_path = output_path.resolve()
     output_path.parent.mkdir(parents=True, exist_ok=True)
 
+    console_messages = []
+
     async with async_playwright() as p:
-        # Launch browser
         browser = await p.chromium.launch(
             headless=True,
             args=[
@@ -40,25 +70,33 @@ async def print_to_pdf(
 
         page = await browser.new_page()
 
+        # Capture browser console logs for debugging
+        page.on("console", lambda msg: console_messages.append(f"[{msg.type}] {msg.text}"))
+        page.on("pageerror", lambda err: console_messages.append(f"[PAGE_ERROR] {err}"))
+
+        # Intercept /api/* requests and route directly to backend, bypassing nginx
+        await page.route("**/api/**", lambda route: _proxy_api_request(route, BACKEND_DIRECT_URL))
+
         try:
-            # Navigate to URL and wait for load
+            print(f"🌐 Navigating to {url}...")
             await page.goto(url, wait_until="networkidle", timeout=60000)
 
-            # Wait for React to render - use provided selector or fallback to general ones
             if selector:
                 try:
-                    await page.wait_for_selector(selector, timeout=10000)
+                    await page.wait_for_selector(selector, timeout=30000)
                     print(f"✅ Found selector: {selector}")
                 except Exception:
-                    print(
-                        f"⚠️ Selector '{selector}' not found, falling back to general content..."
-                    )
-                    await page.wait_for_function(
-                        "document.body.children.length > 0", timeout=10000
+                    if console_messages:
+                        print("📋 Browser console output:")
+                        for msg in console_messages:
+                            print(f"   {msg}")
+
+                    raise RuntimeError(
+                        f"Required selector '{selector}' not found after 30s. "
+                        f"The page likely failed to load data. Check console output above."
                     )
             else:
                 try:
-                    # Try to wait for any main content container
                     await page.wait_for_selector(
                         ".notes-container, .canvas-container, .app-content, main",
                         timeout=10000,
@@ -67,7 +105,6 @@ async def print_to_pdf(
                     print(
                         "⚠️ No specific content selector found, waiting for general content..."
                     )
-                    # Fallback: wait for any content in body
                     await page.wait_for_function(
                         "document.body.children.length > 0", timeout=10000
                     )
@@ -75,11 +112,9 @@ async def print_to_pdf(
             # Additional wait for any async data loading
             await page.wait_for_timeout(2000)
 
-            # Check if we actually have content
             content = await page.content()
             print(f"🔍 Page content length: {len(content)} characters")
 
-            # Generate PDF
             await page.pdf(
                 path=str(output_path),
                 format="A4",
@@ -91,6 +126,10 @@ async def print_to_pdf(
             return str(output_path)
 
         finally:
+            if console_messages:
+                print("📋 Browser console output:")
+                for msg in console_messages:
+                    print(f"   {msg}")
             await browser.close()
 
 
