@@ -457,8 +457,9 @@ def water_plants_from_analysis(watering_date: Optional[str] = None):
             # Don't let email failures affect the main operation
             print(f"Failed to send analysis success notification: {str(e)}")
 
+        overall_success = print_result.get("success", False)
         return {
-            "success": True,
+            "success": overall_success,
             "analysis": analysis_result.to_json(),
             "watering_result": watering_result,
             "garden_stats": stats,

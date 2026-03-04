@@ -54,14 +54,14 @@ class GardenService:
         from ..models import Areal, Plant
 
         with get_session() as session:
-            areal_count = session.exec(select(func.count()).select_from(Areal)).one()
-            plant_count = session.exec(select(func.count()).select_from(Plant)).one()
-            healthy = session.exec(
+            areal_count = int(session.exec(select(func.count()).select_from(Areal)).one())
+            plant_count = int(session.exec(select(func.count()).select_from(Plant)).one())
+            healthy = int(session.exec(
                 select(func.count()).select_from(Plant).where(Plant.health == "healthy")
-            ).one()
-            dead = session.exec(
+            ).one())
+            dead = int(session.exec(
                 select(func.count()).select_from(Plant).where(Plant.health == "dead")
-            ).one()
+            ).one())
             return {
                 "total_areals": areal_count,
                 "total_plants": plant_count,

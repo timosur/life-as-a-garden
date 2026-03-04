@@ -42,7 +42,7 @@ async def print_to_pdf(
 
         try:
             # Navigate to URL and wait for load
-            await page.goto(url, wait_until="networkidle")
+            await page.goto(url, wait_until="networkidle", timeout=60000)
 
             # Wait for React to render - use provided selector or fallback to general ones
             if selector:

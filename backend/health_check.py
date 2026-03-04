@@ -103,7 +103,7 @@ class HealthChecker:
                         "SELECT COUNT(*) FROM information_schema.tables WHERE table_schema = 'public'"
                     )
                 ).one()
-                table_count = result
+                table_count = int(result[0]) if not isinstance(result, int) else result
 
             # Test database operations through our service
             stats = self.garden_db.get_database_stats()
