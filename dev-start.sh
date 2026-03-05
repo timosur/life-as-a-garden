@@ -152,6 +152,10 @@ cleanup() {
     # Cleanup shutdown file
     rm -f "$SHUTDOWN_FILE"
     
+    # Stop PostgreSQL container
+    print_status "Stopping PostgreSQL container..."
+    docker compose stop postgres 2>/dev/null || true
+    
     print_status "All services stopped."
     exit 0
 }
@@ -176,6 +180,16 @@ if [[ ! -d "rmapi-wrapper" ]]; then
 fi
 
 print_status "Starting development environment..."
+
+# Switch to Node.js 22 using nvm
+if command -v nvm >/dev/null 2>&1 || [[ -s "$HOME/.nvm/nvm.sh" ]]; then
+    source "$HOME/.nvm/nvm.sh" 2>/dev/null || true
+    print_status "Switching to Node.js 22 via nvm..."
+    nvm use 22 || nvm install 22
+else
+    print_error "nvm not found. Please install nvm or ensure Node.js 22+ is available."
+    exit 1
+fi
 
 # Check if Python is available
 if ! command -v python3 >/dev/null 2>&1; then
@@ -211,6 +225,17 @@ fi
 
 print_status "All dependencies installed successfully!"
 print_status ""
+
+# Start PostgreSQL via Docker Compose
+print_status "Starting PostgreSQL via Docker Compose..."
+docker compose up -d postgres
+print_status "Waiting for PostgreSQL to be ready..."
+until docker compose exec postgres pg_isready -U garden > /dev/null 2>&1; do
+    sleep 1
+done
+print_status "PostgreSQL is ready!"
+print_status ""
+
 print_status "Services will be available at:"
 print_status "  Backend (FastAPI):     http://localhost:8000"
 print_status "  Frontend (Vite):       http://localhost:5173"

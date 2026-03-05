@@ -27,6 +27,8 @@ services:
       - POSTGRES_USER=garden
       - POSTGRES_PASSWORD=garden
       - POSTGRES_DB=garden
+    ports:
+      - "5432:5432"
     volumes:
       - /var/lib/garden/postgres:/var/lib/postgresql/data
     restart: unless-stopped
