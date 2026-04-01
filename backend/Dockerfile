@@ -21,11 +21,8 @@ WORKDIR /app
 # Copy installed Python packages from builder
 COPY --from=builder /install /usr/local
 
-# Install only runtime system dependencies in a single layer
+# Install base runtime system dependencies
 RUN apt-get update && apt-get install -y --no-install-recommends \
-  imagemagick \
-  ghostscript \
-  inkscape \
   libgbm1 \
   libasound2 \
   unzip \
@@ -34,13 +31,20 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
   curl \
   && rm -rf /var/lib/apt/lists/*
 
-# Install Playwright Chromium
+# Install Playwright Chromium (install-deps runs apt-get and may remove packages installed before)
 RUN playwright install chromium && \
   rm -rf /var/lib/apt/lists/* && \
   apt-get clean && \
   apt-get update && \
   playwright install-deps chromium && \
   rm -rf /var/lib/apt/lists/*
+
+# Install imagemagick, ghostscript, inkscape AFTER playwright install-deps to avoid removal
+RUN apt-get update && apt-get install -y --no-install-recommends \
+  imagemagick \
+  ghostscript \
+  inkscape \
+  && rm -rf /var/lib/apt/lists/*
 
 # Relax ImageMagick policy AFTER playwright install-deps (which can overwrite policy.xml)
 RUN set -eux; \

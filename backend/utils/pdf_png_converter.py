@@ -1,5 +1,6 @@
 import os
 import platform
+import shutil
 import subprocess
 from typing import Dict, Any
 
@@ -82,8 +83,16 @@ def convert_to_png(input_path: str) -> Dict[str, Any]:
             "error": f"Lebensgarten _remarks.pdf not found for conversion. Available files: {os.listdir(input_path)}",
         }
 
+    # Find the ImageMagick binary: prefer 'magick' (v7), fall back to 'convert' (v6)
+    magick_bin = shutil.which("magick") or shutil.which("convert")
+    if not magick_bin:
+        return {
+            "success": False,
+            "error": "Neither 'magick' nor 'convert' commands are available. Please install ImageMagick in the Docker container.",
+        }
+
     magick_cmd = [
-        "convert",
+        magick_bin,
         "-density",
         "300",
         pdf_path,
@@ -94,6 +103,7 @@ def convert_to_png(input_path: str) -> Dict[str, Any]:
 
     # Run ImageMagick with proper error handling and debugging
     try:
+        print(f"🔧 Using ImageMagick binary: {magick_bin}")
         magick_result = subprocess.run(magick_cmd, capture_output=True, text=True)
         print(f"📊 ImageMagick exit code: {magick_result.returncode}")
         if magick_result.stdout:
@@ -106,7 +116,6 @@ def convert_to_png(input_path: str) -> Dict[str, Any]:
             return {"success": True}
         else:
             print("⚠️ PNG conversion may have issues")
-            # List files after conversion attempt for debugging
             try:
                 files_after_conversion = os.listdir(input_path)
                 print(
@@ -115,49 +124,8 @@ def convert_to_png(input_path: str) -> Dict[str, Any]:
             except Exception as list_error:
                 print(f"⚠️ Could not list files: {list_error}")
             return {"success": False, "error": "PNG conversion failed"}
-    except FileNotFoundError:
-        print(
-            "❌ ImageMagick 'convert' command not found. Trying alternative approaches..."
-        )
-        # Try with 'magick convert' as fallback
-        try:
-            magick_cmd_alt = [
-                "magick",
-                "convert",
-                "-density",
-                "300",
-                pdf_path,
-                "-quality",
-                "100",
-                png_path,
-            ]
-            magick_result = subprocess.run(
-                magick_cmd_alt, capture_output=True, text=True
-            )
-            print(
-                f"📊 ImageMagick (magick convert) exit code: {magick_result.returncode}"
-            )
-            if magick_result.stdout:
-                print(f"📤 ImageMagick stdout: {magick_result.stdout}")
-            if magick_result.stderr:
-                print(f"📥 ImageMagick stderr: {magick_result.stderr}")
-
-            if magick_result.returncode == 0:
-                print("✅ PNG conversion completed successfully")
-                return {"success": True}
-            else:
-                return {
-                    "success": False,
-                    "error": "PNG conversion failed with magick convert",
-                }
-        except FileNotFoundError:
-            return {
-                "success": False,
-                "error": "Neither 'convert' nor 'magick' commands are available. Please install ImageMagick in the Docker container.",
-            }
     except Exception as magick_error:
         print(f"❌ ImageMagick command failed: {magick_error}")
-        # List files for debugging
         try:
             files_after_error = os.listdir(input_path)
             print(
